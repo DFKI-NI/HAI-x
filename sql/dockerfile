@@ -1,0 +1,4 @@
+FROM postgis/postgis:17-3.5
+COPY . /docker-entrypoint-initdb.d/
+EXPOSE 5432
+

@@ -1,0 +1,78 @@
+{% from "area-table.html" import build_table, editable_cells %}
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'area' %} active {% endif %}" id="add-tab" data-bs-toggle="tab" data-bs-target="#area-tab-pane" type="button" role="tab">{{ area_lang }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'path' %} active {% endif %}" id="path-tab" data-bs-toggle="tab" data-bs-target="#path-tab-pane" type="button" role="tab">{{ path_lang }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'traj' %} active {% endif %}" id="traj-tab" data-bs-toggle="tab" data-bs-target="#traj-tab-pane" type="button" role="tab">{{ trajectory_lang }}</button>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane fade show {% if tab == 'area' %} active {% endif %}" id="area-tab-pane" role="tabpanel">
+            <div class = "pt-3">
+                {% if area.df is not none %}
+                <div id="button-row">
+                    {% if (area.editable_cols is defined) and area.editable_cols %}
+                    <button type="button" class="btn btn-secondary pe-3" id="save_btn_area" onclick="saveAll('/tables/save/area', '{{area.type}}')" disabled>{{ save_all_lang }}</button>
+                    {% endif %}
+                    <a href="/newarea" type="button" class="btn btn-success" id="add_btn">{{ add_area_lang }}</a>
+                    <button type="button" class="btn btn-danger pe-3" id="delete_btn" onclick="deleteChecked('/tables/delete/area', '{{area.type}}')">{{ delete_lang }}</button>
+                </div>
+            
+                {{ editable_cells(area.editable_cols) if area.editable_cols }}
+                {{ build_table(area) }}
+                {% else %}
+                <p style="color:red;">There is no data to show.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="tab-pane fade show {% if tab == 'path' %} active {% endif %}" id="path-tab-pane" role="tabpanel">
+            <div class = "pt-3">
+                {% if path.df is not none %}
+                <div id="button-row">
+                    {% if (path.editable_cols is defined) and path.editable_cols %}
+                    <button type="button" class="btn btn-secondary pe-3" id="save_btn_path" onclick="saveAll('/tables/save/path', '{{path.type}}')" disabled>{{ save_all_lang }}</button>
+                    {% endif %}
+                    <a href="/newpath/add" type="button" class="btn btn-success" id="add_btn">{{ add_path_lang }}</a>
+                    <button type="button" class="btn btn-danger pe-3" id="delete_btn" onclick="deleteChecked('/tables/delete/path', '{{path.type}}')">{{ delete_lang }}</button>
+                </div>
+            
+                {{ editable_cells(path.editable_cols) if path.editable_cols }}
+                {{ build_table(path) }}
+                {% else %}
+                <p style="color:red;">There is no data to show.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="tab-pane fade show {% if tab == 'traj' %} active {% endif %}" id="traj-tab-pane" role="tabpanel">
+             <div class = "pt-3">
+                <select class="dropdown form-control mb-3" id="traj_dates" onchange="updateTable('{{traj.type}}', 'traj_dates')">
+                    {% for date in traj.dates %}
+                    <option value={{date}} {% if date == traj.req_date %}selected='selected'{% endif %}>{{ date }}</option>
+                    {% endfor %}
+                </select>
+
+                {% if traj.df is not none %}
+                <div id="button-row">
+                    {% if (traj.editable_cols is defined) and traj.editable_cols %}
+                    <button type="button" class="btn btn-secondary pe-3" id="save_btn_traj" onclick="saveAll('/tables/save/traj', '{{traj.type}}')" disabled>Save all</button>
+                    {% endif %}
+                    <button type="button" class="btn btn-danger pe-3" id="delete_btn" onclick="deleteChecked('/tables/delete/traj', '{{traj.type}}')">Delete</button>
+                </div>
+            
+                {{ editable_cells(traj.editable_cols) if traj.editable_cols }}
+                {{ build_table(traj) }}
+                {% else %}
+                <p style="color:red;">There is no data to show.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

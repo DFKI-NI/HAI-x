@@ -1,0 +1,35 @@
+services:
+  interface:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - /mnt/maschsee_videos:/static/video/
+    networks:
+      - haix-network
+    command: flask --app main.py run --host=0.0.0.0
+    depends_on:
+      postgis_container:
+        condition: service_healthy
+
+  postgis_container:
+    build: sql/.
+    ports:
+      - "5432:5432"
+    environment:
+      - "POSTGRES_PASSWORD=secret"
+    networks:
+      - haix-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+
+  path_planning_vrpy:
+    build: services/cvrp_with_vrpy/.
+    networks:
+      - haix-network
+    ports:
+      - "10002:10002"
+
+networks:
+  haix-network:
+    name: haix-network

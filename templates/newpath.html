@@ -1,0 +1,139 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <h1>{{ path_lang }}</h1>
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button href="#" class="nav-link {% if path %} active {% endif %}" id="add-tab" data-bs-toggle="tab" data-bs-target="#add-tab-pane" type="button" role="tab">{{ add_path_lang }}</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button href="#" class="nav-link {% if not path %} active {% endif %}" id="generate-tab" data-bs-toggle="tab" data-bs-target="#generate-tab-pane" type="button" role="tab">{{ generate_path_lang }}</button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show {% if path %} active {% endif %}" id="add-tab-pane" role="tabpanel">
+        <form action="/newpath/add" id="newpath-add" method="POST" class="needs-validation" novalidate>
+          <div class="row g-3 p-2">    
+            <div class="col-sm-6 p-2">
+              <label for="date" class="form-label">{{ date_lang }}</label>
+              <input type="date" class="form-control" name="date" id="date" placeholder="" value="" required>
+            </div>
+            <div class="col-sm-6 p-2">
+              <label for="submit_manuell_path_response" class="form-label" id="submit_manuell_path_response">{{ submit_manuell_path_response }}</label>
+            </div>
+          </div>
+          <div class="row g-3 p-2">
+            <input id="polylineData" type="hidden" name="polylineData">
+            
+            <div id="map" style="height: 450px;">
+            </div>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                  var map = L.map('map').setView([52.353089, 9.745069], 14);
+          
+                  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  }).addTo(map);
+          
+                  var drawnItems = new L.FeatureGroup();
+                  map.addLayer(drawnItems);
+          
+                  var drawControl = new L.Control.Draw({
+                      edit: {
+                          featureGroup: drawnItems
+                      },
+                      draw: {
+                          polygon: false,
+                          polyline: true,
+                          rectangle: false,
+                          circle: false,
+                          marker: false,
+                          circlemarker: false
+                      }
+                  });
+                  map.addControl(drawControl);
+          
+                  map.on(L.Draw.Event.CREATED, function (event) {
+                      var layer = event.layer;
+                      drawnItems.addLayer(layer);
+                  });
+
+                  var form = document.getElementById('newpath-add');
+                  if (form) {
+                      form.addEventListener('submit', function() {
+                          var polylineData = [];
+                          drawnItems.eachLayer(function(layer) {
+                              if (layer instanceof L.Polyline) {
+                                polylineData.push(layer.getLatLngs());
+                              }
+                          });
+                          document.getElementById('polylineData').value = JSON.stringify(polylineData);
+                      });
+                  }
+              });
+            </script>
+
+          </div>
+          <div class="row g-3 p-2">
+            <div class="col-sm-12">
+              <button class="btn btn-primary btn-lg" type="submit">{{ submit_lang }}</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="tab-pane fade show {% if not path %} active {% endif %}" id="generate-tab-pane" role="tabpanel">
+        <p class="g-3 p-2">{{ path_gen_description_lang }}</p>
+        <div class="row align-items-start">
+          <div class="col">
+            <form action="/newpath/generate" method="POST" class="needs-validation">
+              <div id="data_input">
+                <div class="row g-3 p-2 data_row" input="date_input">
+                  <div class="col-sm-4 p-2">
+                    <textarea id="path_hid" name="hidd" hidden>{{ path_var }}</textarea>
+                    <label for="date" class="form-label">{{ date_lang }}</label>
+                    <input type="date" class="form-control" name="date" id="date_0" placeholder="" value="{{ request.form['date'] }}" required>
+                  </div>
+                </div>
+                <div class="row g-3 p-2 data_row">
+                  <div class="col-sm-4 p-2">
+                    <label for="time" class="form-label">{{ hours_available_lang }}</label>
+                    <input type="number" class="form-control" name="hours" value="{{ request.form['hours'] }}">
+                  </div>
+                  <div class="col-sm-4 p-2">
+                    <label for="volume" class="form-label">{{ storage_volume_lang }}</label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" name="volume" value="{{ request.form['volume'] }}">
+                      <div class="input-group-text">m<sup>3</sup></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row g-3 p-2 data_row" id="show_map">
+                <div class="col-sm-4 p-2">
+                  <button type="submit" class="btn btn-primary" name="submit_btn" value="view_paths">{{ view_paths_lang }}</button>
+                </div>
+              </div>
+              <div class="row g-3 p-2 data_row" id="approve_map">
+                <div class="col-sm-4 p-2">
+                  <label for="map_id" class="form-label">{{ map_ids_lang }}</label>
+                  <input type="text" class="form-control {% if show_error %} invalid {% endif %}" name="map_id" id="map_id" placeholder="example - 1,2" value="" {% if not approve_map %} disabled {% endif %}>
+                </div>
+                <div class="col-sm-8 p-2 mt-5">
+                  <button type="submit" class="btn btn-success p-2" name="submit_btn" value="approve" {% if not approve_map %} disabled {% endif %}>{{ approve_lang }}</button>
+                  <button type="submit" class="btn btn-success p-2" name="submit_btn" value="approve_all" {% if not approve_map %} disabled {% endif %}>{{ approve_all_lang }}</button>
+                </div>
+              </div>
+              <div class="row g-3 p-2" {% if not show_error %} hidden {% endif %}>
+                <p style="color: red;">Fill out all required form fields to continue.</p>
+              </div>
+            </form>
+          </div>
+          <div class="col">
+            {{ fig|safe }}
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+<nav class="navbar navbar-expand-md navbar-dark bg-dark" aria-label="Eighth navbar example">
+    <div class="container-fluid">
+        <div>
+            <a href="/" class="navbar-brand me-0">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" width="60" height="60">
+                HAIx Interface
+            </a>
+            <a href="/changelog" target="_blank"><span class="badge bg-primary me-2">{{ version }}</span></a>
+        </div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample04" aria-controls="navbarsExample04" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarsExample04">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a href="/dash" class="nav-link ">Dash</a></li>
+                <li class="nav-item"><a href="/newarea" class="nav-link">{{ new_area_lang }}</a></li>
+                <li class="nav-item"><a href="/newpath/add" class="nav-link">{{ new_path_lang }}</a></li>
+                <li class="nav-item"><a href="/tables/view/area" class="nav-link">{{ tables_lang }}</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
