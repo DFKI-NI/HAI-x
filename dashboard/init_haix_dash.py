@@ -196,6 +196,8 @@ def init_callbacks(app):
             mode='lines'
         )
 
+        fig.update_layout(showlegend=False)
+
         return fig
     
     @app.callback(
