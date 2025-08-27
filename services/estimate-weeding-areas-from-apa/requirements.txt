@@ -1,0 +1,10 @@
+numpy
+pyyaml==6.0.1
+rasterio
+sentinelhub==3.10.1
+opencv-python-headless==4.7.0.72
+scikit-learn
+scipy
+osmnx
+fastapi[standard]
+pydantic

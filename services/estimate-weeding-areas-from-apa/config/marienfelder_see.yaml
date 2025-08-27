@@ -1,0 +1,5 @@
+name: 'Marienfelder See'
+coordinates_wgs84: [7.830266453.4382688,7.8346930,53.4435308]
+bands: ['red', 'nir']
+resolution: 10
+time_interval: ["2018-06-01", "2018-06-30"]
