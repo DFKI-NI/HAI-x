@@ -114,6 +114,7 @@
                   <button type="submit" class="btn btn-primary" name="submit_btn" value="view_paths">{{ view_paths_lang }}</button>
                 </div>
               </div>
+              {% if approve_map %}
               <div class="row g-3 p-2 data_row" id="approve_map">
                 <div class="col-sm-4 p-2">
                   <label for="map_id" class="form-label">{{ map_ids_lang }}</label>
@@ -124,6 +125,7 @@
                   <button type="submit" class="btn btn-success p-2" name="submit_btn" value="approve_all" {% if not approve_map %} disabled {% endif %}>{{ approve_all_lang }}</button>
                 </div>
               </div>
+              {% endif %}
               <div class="row g-3 p-2" {% if not show_error %} hidden {% endif %}>
                 <p style="color: red;">Fill out all required form fields to continue.</p>
               </div>
