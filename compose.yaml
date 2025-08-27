@@ -29,6 +29,18 @@ services:
       - haix-network
     ports:
       - "10002:10002"
+      
+  estimate_areas_of_interest:
+    build: services/estimate-weeding-areas-from-apa
+    networks:
+      - haix-network
+    environment:
+      - sh_client_id=${sh_client_id}
+      - sh_client_secret=${sh_client_secret}
+      - sh_instance_id=${sh_instance_id}
+    ports:
+      - "10003:10003"
+
 
 networks:
   haix-network:
