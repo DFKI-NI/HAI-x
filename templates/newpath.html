@@ -98,12 +98,12 @@
                 <div class="row g-3 p-2 data_row">
                   <div class="col-sm-4 p-2">
                     <label for="time" class="form-label">{{ hours_available_lang }}</label>
-                    <input type="number" class="form-control" name="hours" value="{{ request.form['hours'] }}">
+                    <input type="number" class="form-control" name="hours" value={{ hours_available_value }}>
                   </div>
                   <div class="col-sm-4 p-2">
                     <label for="volume" class="form-label">{{ storage_volume_lang }}</label>
                     <div class="input-group">
-                      <input type="number" class="form-control" name="volume" value="{{ request.form['volume'] }}">
+                      <input type="number" class="form-control" name="volume" value={{ storage_volume_value }}>
                       <div class="input-group-text">m<sup>3</sup></div>
                     </div>
                   </div>
