@@ -303,6 +303,13 @@ def new_path(typ):
                 if show_error == True:
                     approve_map = False
 
+    if approve_map == True:
+        hav = request.form['hours']
+        svv = request.form['volume']
+    else:
+        hav = 2
+        svv = 20
+
     return render_template("newpath.html", version=var.version, path=add, approve_map=approve_map, fig=fig,
                            show_error=show_error, path_var=paths,
                            submit_manuell_path_response=submit_manuell_path_response, add_path_lang=var_lang.ADD_PATH,
@@ -312,7 +319,7 @@ def new_path(typ):
                            map_ids_lang=var_lang.MAP_IDS, view_paths_lang=var_lang.VIEW_PATH,
                            new_area_lang=var_lang.NEW_AREA, new_path_lang=var_lang.NEW_PATH,
                            tables_lang=var_lang.TABLES, storage_volume_lang=var_lang.STORAGE_VOLUME,
-                           hours_available_lang=var_lang.HOURSE_AVAILABLE, language_lang=var_lang.LANGUAGE,
+                           hours_available_lang=var_lang.HOURSE_AVAILABLE, hours_available_value=hav, storage_volume_value=svv, language_lang=var_lang.LANGUAGE,
                            english_lang=var_lang.ENGLISH, german_lang=var_lang.GERMAN)
 
 
