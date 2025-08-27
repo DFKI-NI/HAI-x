@@ -65,7 +65,7 @@ def add_single_new_area_to_db(req, var_lang):
         }
         db.add_row(var.SCHEMA, var.GEO, geom_values)
 
-    return _render_template_helper(var_lang, version=var.version, submit_response="Successfully added new area", aoi=False)
+    return _render_template_helper(var_lang, submit_response="Successfully added new area", aoi=False)
 
 
 def visualize_areas_of_interest(request_dict, var_lang):
