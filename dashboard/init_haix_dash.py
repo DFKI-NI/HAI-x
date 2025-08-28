@@ -36,33 +36,78 @@ def init_haix_dash(dash_app):
     date_choices = util.format_dates()
 
     dash_app.layout = dbc.Container([
-        dcc.Store(id='click-storage'),
-        dbc.Row([
-            dbc.Col([
-                dcc.Dropdown(date_choices, id="dropdown-choice", placeholder="Select dates", multi=True),
-                dcc.Location(id="url", refresh=True),
-                dbc.Checklist(
-                    [{"label":var_lang.AVOID, "value":var.AVOID}, {"label":var_lang.INTEREST, "value":var.INTEREST}, {"label":var_lang.TRAJECTORY, "value":var.TRAJECTORY}, {"label":var_lang.PATH, "value":var.PATH_PLANNING}],
-                    [var.AVOID, var.INTEREST],
-                    inline=True,
-                    id="choices"
-                ),
-                dcc.Graph(figure={}, id='map-viz', style={'height': '60vh'}, config={'scrollZoom': True}),
-            ], width=12, lg=6, className="g-0"),
-            dbc.Col([
-                html.B("Click area on map to see information below"),
-                html.Div(id="click-info-output", className="mb-3"),
-                html.Div(id="Test")
-            ], width=12, lg=6)
+        dcc.Location(id='url', refresh=True),
+        html.Div(id='page-content', children=[
+            dcc.Store(id='click-storage'),
+            dbc.Row([
+                dbc.Col([
+                    dcc.Dropdown(date_choices, id="dropdown-choice", placeholder="Select dates", multi=True),
+                    dbc.Checklist(
+                        [{"label":var_lang.AVOID, "value":var.AVOID}, {"label":var_lang.INTEREST, "value":var.INTEREST}, {"label":var_lang.TRAJECTORY, "value":var.TRAJECTORY}, {"label":var_lang.PATH, "value":var.PATH_PLANNING}],
+                        [var.AVOID, var.INTEREST],
+                        inline=True,
+                        id="choices"
+                    ),
+                    dcc.Graph(figure={}, id='map-viz', style={'height': '60vh'}, config={'scrollZoom': True}),
+                ], width=12, lg=6, className="g-0"),
+                dbc.Col([
+                    html.B("Click area on map to see information below"),
+                    html.Div(id="click-info-output", className="mb-3"),
+                    html.Div(id="Test")
+                ], width=12, lg=6)
+            ]),
         ]),
     ], fluid=True)
-
 
     init_callbacks(dash_app)
 
     return dash_app.server
 
+
 def init_callbacks(app):
+    @app.callback(
+        Output(component_id='page-content', component_property='children'),
+        Input(component_id='url', component_property='pathname')
+    )
+    def display_page(pathname):
+        var_lang = language_utils.get_language_module()
+        date_choices = util.format_dates()
+
+        content = html.Div(children=[
+                dcc.Store(id='click-storage'),
+                dbc.Row([
+                    dbc.Col([
+                        dcc.Dropdown(date_choices, id="dropdown-choice", placeholder="Select dates", multi=True),
+                        dbc.Checklist(
+                            [{"label": var_lang.AVOID, "value": var.AVOID}, {"label": var_lang.INTEREST, "value": var.INTEREST},
+                             {"label": var_lang.TRAJECTORY, "value": var.TRAJECTORY},
+                             {"label": var_lang.PATH, "value": var.PATH_PLANNING}],
+                            [var.AVOID, var.INTEREST],
+                            inline=True,
+                            id="choices"
+                        ),
+                        dcc.Graph(figure={}, id='map-viz', style={'height': '60vh'}, config={'scrollZoom': True}),
+                    ], width=12, lg=6, className="g-0"),
+                    dbc.Col([
+                        html.B("Click area on map to see information below"),
+                        html.Div(id="click-info-output", className="mb-3"),
+                        html.Div(id="Test")
+                    ], width=12, lg=6)
+                ])
+            ])
+
+        error_layout = html.H1('404 - Seite nicht gefunden')
+
+        # Hier definierst du, welcher Pfad welches Layout anzeigt
+        if pathname == '/':
+            return content
+        elif pathname == '/dashboard':
+            return content
+        elif pathname == '/dash':
+            return content
+        else:
+            return error_layout
+
     @app.callback(
         Output(component_id="dropdown-choice", component_property="options"),
         Input(component_id='dropdown-choice', component_property='value')
@@ -213,6 +258,7 @@ def init_callbacks(app):
         if clickData is not None:
             if 'customdata' in clickData['points'][0].keys():
                 map_info = clickData['points'][0]["customdata"]
+                print(map_info[0])
                 if map_info[0] == var.seekuh:
                     logging.info(clickData['points'][0])
                     informations = util.get_index(float(map_info[3]), map_info[1])
