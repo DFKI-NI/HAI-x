@@ -274,7 +274,7 @@ def init_callbacks(app):
                         geojson = json.load(file)
                     id = clickData['points'][0]['location']
                     for area in geojson['features']:
-                        if id == area['id']:
+                        if int(id) == area['id']:
                             block = html.Div([
                                 html.P('Area: ' + str(id)),
                                 html.Span(id="example-output", style={"verticalAlign": "middle"}),
