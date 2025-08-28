@@ -288,8 +288,8 @@ def init_callbacks(app):
                             block.children.append(point_list)
                             block.children.append(util.add_images(id))
                             
-                            sonar_section = get_sonar_section(id)
-                            block.children.append(sonar_section)
+                            # sonar_section = get_sonar_section(id)
+                            # block.children.append(sonar_section)
 
                             delete_block = html.Div([
                                 html.Button('Delete Area',
