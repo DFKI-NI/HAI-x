@@ -114,7 +114,7 @@ def add_images(id):
         'height': 'auto'
     }
     df = db.open_table(var.SCHEMA, var.AREA, var.AREA_COLS)
-    image_paths = df.loc[df['idx'] == id]['image_path'].values[0]
+    image_paths = df.loc[df['idx'] == int(id)]['image_path'].values[0]
     if type(image_paths) == str:
         image_block = html.Div([html.P('Images:')], className='mb-3')
         images = html.Div(children=[], style=parent_style_dict)
