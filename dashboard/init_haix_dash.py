@@ -240,9 +240,7 @@ def init_callbacks(app):
             lon=[],
             mode='lines'
         )
-
-        fig.update_layout(showlegend=False)
-
+        
         return fig
     
     @app.callback(
