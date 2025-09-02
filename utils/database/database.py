@@ -131,7 +131,12 @@ def get_max_id(schema, table):
         haix.execute(query)
         results = haix.fetchall()
 
-        return int(results[0][0])
+        if results[0][0] is None:
+            result = 0
+        else:
+            result = int(results[0][0])
+
+        return result
 
 
 def select_distinct(schema, table, col):
