@@ -13,8 +13,10 @@ from flask import render_template, request, current_app as app, session, jsonify
 from utils import route_util as util, generate_path_script
 from utils import variables as var, dash_util as dutil, language_utils
 from utils.database import database as db
-from .new_area import add_single_new_area_to_db, visualize_areas_of_interest
-import sys
+from .new_area import add_single_new_area_to_db, visualize_areas_of_interest, save_date_file, get_possible_satellite_fly_overs
+
+DATES_FILE_NAME_PREFIX = "./static/data/dates_of_fly_overs_for-"
+DEFAULT_DATES_FILE_NAME = DATES_FILE_NAME_PREFIX + "Maschsee,Hannover,Germany"
 
 TRAJ_OBJ = {
     'editable_cols': [],
@@ -29,6 +31,14 @@ TRAJ_OBJ = {
 def new_area():
     """New Area"""
     var_lang = language_utils.get_language_module()
+
+    #available_dates_file = DEFAULT_DATES_FILE_NAME
+    #save_date_file(available_dates_file)
+    available_dates = get_possible_satellite_fly_overs()['available_dates']
+    available_dates = available_dates[-10:] if len(available_dates) >= 10 else available_dates
+
+    # with open(available_dates_file, 'w') as f:
+    #     available_dates = json.load(f)['available_dates']
 
     return render_template("newarea.html", new_area_lang=var_lang.NEW_AREA, new_path_lang=var_lang.NEW_PATH,
                            tables_lang=var_lang.TABLES, toa_lang=var_lang.TOA, avoid_lang=var_lang.AVOID,
@@ -49,7 +59,8 @@ def new_area():
                            resolution_value="10",
                            cloud_coverage_value="0.1",
                            n_areas_value="5",
-                           lake_query_value="")
+                           lake_query_value="",
+                           available_dates=available_dates)
 
 @app.route("/newarea/add", methods=["POST"])
 def new_area_add():
@@ -70,13 +81,26 @@ def new_area_get_aois():
         'lake_query': request.form.getlist('lake_query')[0],
     }
 
-    return visualize_areas_of_interest(request_dict, var_lang)
+    # if request_dict['lake_query'] == "":
+    # available_dates_file = DEFAULT_DATES_FILE_NAME
+    # else:
+    #     available_dates_file = DATES_FILE_NAME_PREFIX + request_dict['lake_query'].replace(" ", "")
+    # save_date_file(available_dates_file)
+
+    # with open(available_dates_file, 'r') as f:
+    #     available_dates = json.load(f)['available_dates']
+
+    available_dates = get_possible_satellite_fly_overs(request_dict)['available_dates']
+    available_dates = available_dates[-10:] if len(available_dates) >= 10 else available_dates
+
+    return visualize_areas_of_interest(request_dict, var_lang, available_dates=available_dates)
 
 
 @app.route("/newarea/save_aois", methods=["POST"])
 def new_area_save_aois():
     var_lang = language_utils.get_language_module()
-
+    available_dates = get_possible_satellite_fly_overs()['available_dates']
+    available_dates = available_dates[-10:] if len(available_dates) >= 10 else available_dates
     date = request.form.getlist('date_to_save')
 
     dieliste = literal_eval(request.form.getlist('aois_ts')[0])
@@ -150,6 +174,7 @@ def new_path(typ):
     fig = "<div></div>"
     show_error = False
     submit_manuell_path_response = ""
+    pgd = var_lang.PATH_GENERATE_DESCRIPTION
 
     if typ == var.ADD:
         """New Path"""
@@ -240,6 +265,8 @@ def new_path(typ):
                     fig = generate_path_script.draw_map2(paths, aoi_dict)
                     fig = fig.to_html(full_html=False)
                     approve_map = True
+                else:
+                    pgd = "There are no Areas of Interest for this date. Please choose another date."
 
             # paths = generate_path_script.get_paths(date, available_hours, volume)
             # r = requests.get(
@@ -303,6 +330,7 @@ def new_path(typ):
                 if show_error == True:
                     approve_map = False
 
+
     if approve_map == True:
         hav = request.form['hours']
         svv = request.form['volume']
@@ -314,7 +342,7 @@ def new_path(typ):
                            show_error=show_error, path_var=paths,
                            submit_manuell_path_response=submit_manuell_path_response, add_path_lang=var_lang.ADD_PATH,
                            generate_path_lang=var_lang.GENERATE_PATH, submit_lang=var_lang.SUBMIT,
-                           date_lang=var_lang.DATE, path_gen_description_lang=var_lang.PATH_GENERATE_DESCRIPTION,
+                           date_lang=var_lang.DATE, path_gen_description_lang=pgd,
                            approve_lang=var_lang.APPROVE, approve_all_lang=var_lang.APPROVE_ALL,
                            map_ids_lang=var_lang.MAP_IDS, view_paths_lang=var_lang.VIEW_PATH,
                            new_area_lang=var_lang.NEW_AREA, new_path_lang=var_lang.NEW_PATH,
