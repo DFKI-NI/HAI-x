@@ -5,12 +5,31 @@ import requests
 import numpy as np
 from scipy.spatial import ConvexHull
 import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import json
+import os
 
 from utils import route_util as util
 from utils import variables as var
 from utils.database import database as db
 
 import logging
+
+
+def save_date_file(filename):
+    #todo: add lake query etc.
+    if not os.path.exists(filename):
+        dates = get_possible_satellite_fly_overs()  # if empty, this is for cloud coverage 0.5, Maschsee
+    else:
+        with open(filename, 'r') as f:
+            dates = json.load(f)
+        recent_date = datetime.strptime(dates['available_dates'][-1], "%Y-%m-%d")
+        today = datetime.today()
+        while not (today - recent_date < timedelta(days=5)):
+            recent_date += timedelta(days=5)
+            dates['available_dates'].append(recent_date)
+    with open(filename, "w") as f:
+        f.write(json.dumps(dates))
 
 
 def add_single_new_area_to_db(req, var_lang):
@@ -68,14 +87,16 @@ def add_single_new_area_to_db(req, var_lang):
     return _render_template_helper(var_lang, submit_response="Successfully added new area", aoi=False)
 
 
-def visualize_areas_of_interest(request_dict, var_lang):
+def visualize_areas_of_interest(request_dict, var_lang, **kwargs):
     aoi_result = f"<div></div>"
+
+    available_dates_file = kwargs.get('available_dates_file')
 
     # Check for input data
     if not request_dict['day'] or not request_dict['lake_query']:
         aoi_result = (f"Data is missing. Please provide day and lake query."
                       f"<div> {request_dict} </div>")
-        return _render_template_helper(var_lang, aoi_result=aoi_result, aoi=True, submit_response=var_lang.NEW_AREA_SITE['input_data_missing'])
+        return _render_template_helper(var_lang, aoi_result=aoi_result, aoi=True, submit_response=var_lang.NEW_AREA_SITE['input_data_missing'], available_dates_file=available_dates_file)
 
     request_str = 'http://estimate_areas_of_interest:10003/api/get_aois'
 
@@ -87,7 +108,7 @@ def visualize_areas_of_interest(request_dict, var_lang):
             aoi_result = (f"For this date, no data is available \n\n "
                           f"Input: {request_dict} \n\n "
                           f"Output{apa_data}")
-            return _render_template_helper(var_lang, aoi_result=aoi_result, aoi=True)
+            return _render_template_helper(var_lang, aoi_result=aoi_result, aoi=True, available_dates_file=available_dates_file)
 
         date = list(apa_data.keys())[0]
         raw_apa = np.array(apa_data[date]['raw_apa'])
@@ -98,13 +119,32 @@ def visualize_areas_of_interest(request_dict, var_lang):
         fig = _draw_area_of_interest(date, raw_apa, cropped_apa, gps, area_of_interest)
         aoi_result = fig.to_html(full_html=False)
 
-        return _render_template_helper(var_lang, aoi_result=aoi_result, aoi=True, aois_to_save=apa_data[date]['areas_of_interest'], date_to_save=date, aoi_req=True, current_date=date, lake_query_value=request_dict['lake_query'], resolution_value=request_dict['resolution_in_m'], cloud_coverage_value=request_dict['cloud_coverage'], n_areas_value=request_dict['n_areas'])
+        return _render_template_helper(var_lang, aoi_result=aoi_result, aoi=True, aois_to_save=apa_data[date]['areas_of_interest'],
+                                       date_to_save=date,
+                                       aoi_req=True,
+                                       current_date=date,
+                                       lake_query_value=request_dict['lake_query'],
+                                       resolution_value=request_dict['resolution_in_m'],
+                                       cloud_coverage_value=request_dict['cloud_coverage'],
+                                       n_areas_value=request_dict['n_areas'],
+                                       available_dates_file=available_dates_file)
 
     else:
         aoi_result = (f"Error code: {data.status_code} \n\n "
                       f"Input: {request_dict} \n\n "
                       f"Output {data.json()}")
-        return _render_template_helper(var_lang, aoi_result=aoi_result, aoi=True)
+        return _render_template_helper(var_lang, aoi_result=aoi_result, aoi=True, available_dates_file=available_dates_file)
+
+
+def get_possible_satellite_fly_overs(request_dict=None):
+    # request_dict already has default values. If they are empty, the API fills them up with the default values
+    request_dict = dict() if request_dict is None else request_dict
+
+    request_str = 'http://estimate_areas_of_interest:10003/api/get_available_dates'
+
+    dates = requests.post(request_str, json=request_dict)
+
+    return dates.json()
 
 
 def _draw_area_of_interest(date, raw_apa, cropped_apa, gps, areas_of_interest):
