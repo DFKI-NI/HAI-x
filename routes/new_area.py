@@ -48,7 +48,7 @@ def add_single_new_area_to_db(req, var_lang):
     number_polygons = len(cordpairs_list)
 
     if number_polygons < 1:
-        return _render_template_helper(var_lang, aoi=False)
+        return _render_template_helper(var_lang, aoi=False, failure_message="To create an area, a polygon is required!")
 
     polygon_coordinates = []
 
