@@ -22,7 +22,7 @@ flask --app main.py run --host=0.0.0.0
 ```
 
 ## VRPy API
-The service that uses VRPy to create paths which include all areas of interest of one day can be reached under the port 10002 with a POST request and the following data.
+The service that uses VRPy to create paths which include all areas of interest of one day can be reached under the port <b>10002</b> and the path <b>/routePos</b> with a POST request and the following data.
 
 ```
 {
