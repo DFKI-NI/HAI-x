@@ -11,6 +11,14 @@ export sh_client_secret=<value>
 export sh_client_id=<value>
 ```
 
+These values can be obtained at the Sentinel Hub (https://www.sentinel-hub.com/). You need an account and a plan (Exploration plan or free trial is enough for Process API and OGC API). Before using it, you must authenticate using your credentials (client ID and secret).
+
+- On the Sentinel Hub website, login with your credentials
+- Go to your account settings
+- Under OAuth clients, click on 'create new'
+- Enter a client name and create it
+- Note the client ID and client secret for later use
+
 Next, docker compose will start everything:
 ```
 docker compose up
