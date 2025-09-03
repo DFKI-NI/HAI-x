@@ -43,6 +43,25 @@ The service that uses VRPy to create paths which include all areas of interest o
     }
 }
 ```
+A more detailed description of this service api can be found under <b>services/cvrp_with_vrpy</b>.
+
+## Creating AoIs with APA
+The AoIs from APA service uses the port <b>10003</b> and the route is <b>/api/get_aois</b>. The POST request should send data like
+
+```
+{
+  "start": "2025-01-01",
+  "stop": "2025-01-31",
+  "day": null,
+  "resolution_in_m": 10,
+  "max_cloud_coverage": 0.5,
+  "lake_query": "Maschsee, Hannover, Germany",
+  "copernicus_data_service": "ALL-BANDS-TRUE-COLOR",
+  "n_areas": 20
+}
+```
+
+A more detailed description of this service API can be found under <b>services/estimate-weeding-areas-from-apa</b>.
 
 ### Funding
 The project HAI-x was funded by the BMBF und the founding number 01IW23003.
