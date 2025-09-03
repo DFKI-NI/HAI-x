@@ -12,7 +12,7 @@ Start the docker container with
 docker run -d -p 8002:8002 pathplanningvrpy
 ```
 
-You can get a path by sending a dictionary to /route/. The data should look like the example:
+You can get a path by sending a dictionary to /routePos/. The data should look like the example:
 ```
 {
     'vc':15, 
