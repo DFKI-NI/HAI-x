@@ -11,6 +11,6 @@ RUN apt-get update && \
 
 COPY . .
 
-RUN rm -r notebooks && rm -r assets
+RUN rm -r assets
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10003"]
