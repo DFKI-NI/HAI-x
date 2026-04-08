@@ -1,1 +1,0 @@
-This is a temporary directory, this should be populated with marine debris dataset or others.
