@@ -1,0 +1,413 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>{{ path_lang }}</h1>
+    </div>
+
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if path %} active {% endif %}" id="add-tab" data-bs-toggle="tab" data-bs-target="#add-tab-pane" type="button" role="tab" aria-controls="add-tab-pane" aria-selected="{{ 'true' if path else 'false' }}">{{ add_path_lang }}</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if not path and not capacitated %} active {% endif %}" id="generate-tab" data-bs-toggle="tab" data-bs-target="#generate-tab-pane" type="button" role="tab" aria-controls="generate-tab-pane" aria-selected="{{ 'true' if not path and not capacitated else 'false' }}">{{ generate_path_lang }}</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if capacitated %} active {% endif %}" id="cap-path-tab" data-bs-toggle="tab" data-bs-target="#cap-path-tab-pane" type="button" role="tab" aria-controls="cap-path-tab-pane" aria-selected="{{ 'true' if capacitated else 'false' }}">{{ capacitated_path_lang }}</button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Add Path Tab -->
+      <div class="tab-pane fade show {% if path %} active {% endif %}" id="add-tab-pane" role="tabpanel" aria-labelledby="add-tab">
+        <form action="/newpath/add" id="newpath-add" method="POST" class="needs-validation" novalidate>
+          <div class="row g-3 p-2">
+            <div class="col-sm-6">
+              <label for="date" class="form-label">{{ date_lang }}</label>
+              <input type="date" class="form-control" name="date" id="date" value="" required>
+              {% if aoi_dates %}
+              <select class="form-select mt-2" onchange="if(this.value) document.getElementById('date').value=this.value;" aria-label="Select date from areas of interest">
+                <option value="" selected>Select AOI date&hellip;</option>
+                {% for d in aoi_dates %}
+                <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+              </select>
+              {% endif %}
+            </div>
+            <div class="col-sm-6 d-flex align-items-end">
+              {% if submit_manuell_path_response %}
+              <div class="submit-response" role="status" aria-live="polite">{{ submit_manuell_path_response }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="row g-3 p-2">
+            <input id="polylineData" type="hidden" name="polylineData">
+            <div class="col-12">
+              <label class="form-label">Draw path on the map</label>
+              <div id="map" class="map-container" style="height: 450px;" role="application" aria-label="Interactive map for drawing paths"></div>
+            </div>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                  var map = L.map('map').setView([52.353089, 9.745069], 14);
+
+                  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  }).addTo(map);
+
+                  var drawnItems = new L.FeatureGroup();
+                  map.addLayer(drawnItems);
+
+                  var drawControl = new L.Control.Draw({
+                      edit: {
+                          featureGroup: drawnItems
+                      },
+                      draw: {
+                          polygon: false,
+                          polyline: true,
+                          rectangle: false,
+                          circle: false,
+                          marker: false,
+                          circlemarker: false
+                      }
+                  });
+                  map.addControl(drawControl);
+
+                  map.on(L.Draw.Event.CREATED, function (event) {
+                      var layer = event.layer;
+                      drawnItems.addLayer(layer);
+                  });
+
+                  var form = document.getElementById('newpath-add');
+                  if (form) {
+                      form.addEventListener('submit', function() {
+                          var polylineData = [];
+                          drawnItems.eachLayer(function(layer) {
+                              if (layer instanceof L.Polyline) {
+                                polylineData.push(layer.getLatLngs());
+                              }
+                          });
+                          document.getElementById('polylineData').value = JSON.stringify(polylineData);
+                      });
+                  }
+              });
+            </script>
+          </div>
+          <div class="row g-3 p-2 mt-2">
+            <div class="col-sm-12">
+              <button class="btn btn-primary btn-lg" type="submit">{{ submit_lang }}</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Generate Path Tab -->
+      <div class="tab-pane fade show {% if not path and not capacitated %} active {% endif %}" id="generate-tab-pane" role="tabpanel" aria-labelledby="generate-tab">
+        <p class="p-2">{{ path_gen_description_lang }}</p>
+        <div class="row align-items-start">
+          <div class="col-lg-6">
+            <form action="/newpath/generate" method="POST" class="needs-validation">
+              <div id="data_input">
+                <div class="row g-3 p-2">
+                  <div class="col-sm-6">
+                    <textarea id="path_hid" name="hidd" hidden aria-hidden="true">{{ path_var }}</textarea>
+                    <label for="date_0" class="form-label">{{ date_lang }}</label>
+                    <input type="date" class="form-control" name="date" id="date_0" value="{{ request.form['date'] }}" required>
+                    {% if aoi_dates %}
+                    <select class="form-select mt-2" onchange="if(this.value) document.getElementById('date_0').value=this.value;" aria-label="Select date from areas of interest">
+                      <option value="" selected>Select AOI date&hellip;</option>
+                      {% for d in aoi_dates %}
+                      <option value="{{ d }}">{{ d }}</option>
+                      {% endfor %}
+                    </select>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="row g-3 p-2">
+                  <div class="col-sm-6">
+                    <label for="hours" class="form-label">{{ hours_available_lang }}</label>
+                    <input type="number" class="form-control" name="hours" id="hours" value={{ hours_available_value }}>
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="volume" class="form-label">{{ storage_volume_lang }}</label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" name="volume" id="volume" value={{ storage_volume_value }}>
+                      <span class="input-group-text">m<sup>3</sup></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row g-3 p-2">
+                <div class="col-sm-6">
+                  <button type="submit" class="btn btn-primary" name="submit_btn" value="view_paths">{{ view_paths_lang }}</button>
+                </div>
+              </div>
+              {% if approve_map %}
+              <div class="row g-3 p-2">
+                <div class="col-sm-5">
+                  <label for="map_id" class="form-label">{{ map_ids_lang }}</label>
+                  <input type="text" class="form-control {% if show_error %} invalid {% endif %}" name="map_id" id="map_id" placeholder="e.g. 1,2" value="" {% if not approve_map %} disabled {% endif %}>
+                </div>
+                <div class="col-sm-7 d-flex align-items-end gap-2 pb-1">
+                  <button type="submit" class="btn btn-success" name="submit_btn" value="approve" {% if not approve_map %} disabled {% endif %}>{{ approve_lang }}</button>
+                  <button type="submit" class="btn btn-success" name="submit_btn" value="approve_all" {% if not approve_map %} disabled {% endif %}>{{ approve_all_lang }}</button>
+                </div>
+              </div>
+              {% if show_error %}
+              <div class="row g-3 p-2">
+                <div class="col-12">
+                  <p class="no-data-message">Fill out all required form fields to continue.</p>
+                </div>
+              {% endif %}
+              <div class="row g-3 p-2" {% if not show_error %} hidden {% endif %}>
+                <p style="color: red;">Fill out all required form fields to continue.</p>
+              </div>
+              {% endif %}
+            </form>
+          </div>
+          <div class="col-lg-6">
+            <div id="generated-map" class="map-container fade-in" style="height: 450px;"></div>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                  var mapData = {{ fig|safe if fig and fig != '<div></div>' else 'null' }};
+                  if (mapData) {
+                      var gmap = L.map('generated-map').setView([52.353089, 9.745069], 13);
+                      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      }).addTo(gmap);
+                      var colors = ['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#bfef45'];
+                      var colorIdx = 0;
+                      if (mapData.paths) {
+                          for (var routeId in mapData.paths) {
+                              var route = mapData.paths[routeId];
+                              var latlngs = route.map(function(p) { return [p[0], p[1]]; });
+                              var color = colors[colorIdx % colors.length];
+                              L.polyline(latlngs, {color: color, weight: 3}).addTo(gmap);
+                              latlngs.forEach(function(ll) {
+                                  L.circleMarker(ll, {radius: 4, color: color, fillColor: color, fillOpacity: 0.8}).addTo(gmap);
+                              });
+                              colorIdx++;
+                          }
+                      }
+                      if (mapData.aoi) {
+                          for (var aoiId in mapData.aoi) {
+                              var aoi = mapData.aoi[aoiId];
+                              L.circleMarker([aoi.center[0], aoi.center[1]], {
+                                  radius: 8, color: 'green', fillColor: 'green', fillOpacity: 0.6
+                              }).bindPopup('AOI ' + aoiId + ' (amount: ' + aoi.amount + ')').addTo(gmap);
+                          }
+                      }
+                      var allPoints = [];
+                      if (mapData.paths) { for (var r in mapData.paths) { mapData.paths[r].forEach(function(p) { allPoints.push([p[0], p[1]]); }); } }
+                      if (allPoints.length > 0) { gmap.fitBounds(L.latLngBounds(allPoints).pad(0.1)); }
+                  }
+              });
+            </script>
+          </div>
+        </div>
+      </div>
+
+      <!-- Capacitated Path Tab -->
+      <div class="tab-pane fade show {% if capacitated %} active {% endif %}" id="cap-path-tab-pane" role="tabpanel" aria-labelledby="cap-path-tab">
+        <p class="p-2">Plan a path according to the capacitated path planning, considering harvester capacity constraints.</p>
+
+        {% if cap_response %}
+        <div class="row g-3 p-2">
+          <div class="submit-response" role="status" aria-live="polite">{{ cap_response }}</div>
+        </div>
+        {% endif %}
+
+        <form action="/newpath/capacitated" method="POST" class="needs-validation" novalidate>
+          <div class="row g-3 p-2">
+            <div class="col-sm-3">
+              <label for="cap_path_date" class="form-label">{{ date_lang }}</label>
+              <input type="date" class="form-control" name="date" id="cap_path_date" value="{{ cap_date_value|default('', true) }}" required>
+              {% if aoi_dates %}
+              <select class="form-select mt-2" onchange="if(this.value) document.getElementById('cap_path_date').value=this.value;" aria-label="Select date from areas of interest">
+                <option value="" selected>Select AOI date&hellip;</option>
+                {% for d in aoi_dates %}
+                <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+              </select>
+              {% endif %}
+            </div>
+            <div class="col-sm-3">
+              <label for="cap_hours" class="form-label">{{ hours_available_lang }}</label>
+              <input type="number" class="form-control" name="hours" id="cap_hours" value="{{ cap_hours_value|default('2', true) }}">
+            </div>
+            <div class="col-sm-3">
+              <label for="cap_volume" class="form-label">{{ storage_volume_lang }}</label>
+              <div class="input-group">
+                <input type="number" class="form-control" name="volume" id="cap_volume" value="{{ cap_volume_value|default('20', true) }}">
+                <span class="input-group-text">m<sup>3</sup></span>
+              </div>
+            </div>
+            <div class="col-sm-3">
+              <label for="cap_harvester_capacity" class="form-label">Harvester Capacity (m&sup3;)</label>
+              <input type="number" class="form-control" name="harvester_capacity" id="cap_harvester_capacity" value="{{ cap_capacity_value|default('20', true) }}">
+            </div>
+          </div>
+          <div class="row g-3 p-2 mt-2">
+            <div class="col-sm-12">
+              <button class="btn btn-primary btn-lg" type="submit">{{ capacitated_path_lang }}</button>
+            </div>
+          </div>
+        </form>
+
+                
+        {% if cap_result %}
+        <div id="path-map" class="map-container fade-in mt-3" style="height: 450px;"></div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const routes = {{ cap_result | safe }};  // FeatureCollection vom Path-Service
+          if (!routes || routes.type !== 'FeatureCollection') {
+            console.error('Invalid GeoJSON in cap_result');
+            return;
+          }
+
+          const map = L.map('path-map');
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(map);
+
+          // Diskrete Farbpalette für serpentine_id
+          const palette = [
+            '#0d6efd','#e83e8c','#198754','#fd7e14','#6f42c1',
+            '#20c997','#dc3545','#6610f2','#17a2b8','#ffc107',
+            '#343a40','#8e44ad','#2ecc71','#f39c12','#c0392b'
+          ];
+          function colorBySerpentineId(id) {
+            if (id === null || id === undefined) return '#555';
+            const idx = Math.abs(Number(id)) % palette.length;
+            return palette[idx];
+          }
+
+          // Marker-Styles
+          const startIcon = L.divIcon({
+            className: 'start-marker',
+            html: '<div style="width:10px;height:10px;border-radius:50%;background:#28a745;border:2px solid #155724;"></div>',
+            iconSize: [10,10],
+            iconAnchor: [5,5]
+          });
+          const endIcon = L.divIcon({
+            className: 'end-marker',
+            html: '<div style="width:10px;height:10px;border-radius:50%;background:#dc3545;border:2px solid #721c24;"></div>',
+            iconSize: [10,10],
+            iconAnchor: [5,5]
+          });
+
+          // Hilfsfunktion: Start/End-Koordinaten aus LineString ziehen
+          function getStartEndLatLngs(feature) {
+            const geom = feature.geometry;
+            if (!geom || geom.type !== 'LineString' || !Array.isArray(geom.coordinates)) return null;
+            const coords = geom.coordinates; // [ [lon,lat], ... ]
+            if (coords.length < 2) return null;
+            const start = [coords[0][1], coords[0][0]];
+            const end   = [coords[coords.length - 1][1], coords[coords.length - 1][0]];
+            return { start, end };
+          }
+
+          // GeoJSON-Layer
+          const routeLayer = L.geoJSON(routes, {
+            style: function (feature) {
+              const sid = feature?.properties?.serpentine_id;
+              return {
+                color: colorBySerpentineId(sid),
+                weight: 4,
+                opacity: 0.9
+              };
+            },
+            onEachFeature: function (feature, layer) {
+              // Hover-Highlight
+              layer.on('mouseover', function () {
+                this.setStyle({ weight: 6, opacity: 1.0 });
+                this.bringToFront();
+              });
+              layer.on('mouseout', function () {
+                this.setStyle({ weight: 4, opacity: 0.9 });
+              });
+
+              // Popup
+              const p = feature.properties || {};
+              const popupHtml = `
+                <div style="min-width:220px;">
+                  <b>Serpentine ID:</b> ${p.serpentine_id ?? '-'}<br>
+                  <b>Mode:</b> ${p.mode ?? '-'}<br>
+                  <b>Row spacing:</b> ${typeof p.row_spacing === 'number' ? p.row_spacing.toFixed(2) : p.row_spacing ?? '-'} m<br>
+                  <b>Num rows:</b> ${p.num_rows ?? '-'} &nbsp; | &nbsp; <b>Turns:</b> ${p.num_turns ?? '-'}<br>
+                  <b>Coverage:</b> ${typeof p.coverage_ratio === 'number' ? (p.coverage_ratio * 100).toFixed(1) + '%' : (p.coverage_ratio ?? '-')}<br>
+                  <b>Method:</b> ${p.method ?? '-'}<br>
+                  <b>Explanation:</b> ${p.explanation ?? '-'}
+                </div>
+              `;
+              layer.bindPopup(popupHtml);
+
+              // Start/End-Marker
+              const se = getStartEndLatLngs(feature);
+              if (se) {
+                const sid = p.serpentine_id ?? '';
+                L.marker(se.start, { icon: startIcon })
+                  .bindTooltip(`Start ${sid}`, {direction: 'top', offset: [0, -6]})
+                  .addTo(map);
+                L.marker(se.end, { icon: endIcon })
+                  .bindTooltip(`End ${sid}`, {direction: 'top', offset: [0, -6]})
+                  .addTo(map);
+              }
+            }
+          }).addTo(map);
+
+          // Zoomen auf Layer
+          if (routeLayer.getLayers().length > 0) {
+            map.fitBounds(routeLayer.getBounds().pad(0.1));
+          }
+
+          // Legende (Anzahl & Distanz, wenn in metadata)
+          const features = routes.features || [];
+          const meta = routes.metadata || {};
+          const n = features.length;
+          const totalDistance = (typeof meta.total_distance === 'number') ? meta.total_distance : null;
+
+          const legend = L.control({ position: 'bottomright' });
+          legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.style.background = 'white';
+            div.style.padding = '8px';
+            div.style.borderRadius = '4px';
+            div.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+            div.style.lineHeight = '1.3em';
+            div.innerHTML = `
+              <div style="font-weight:600; margin-bottom:4px;">Paths</div>
+              <div><b>Features:</b> ${n}</div>
+              ${ totalDistance !== null ? `<div><b>Total distance:</b> ${totalDistance.toFixed(2)} km</div>` : '' }
+              <div style="margin-top:6px; font-size:12px; color:#555;">Line color by <i>serpentine_id</i>.</div>
+            `;
+            return div;
+          };
+          legend.addTo(map);
+        });
+        </script>
+        {% endif %}
+
+
+
+      {% if cap_result %}
+      <form action="/newpath/save" method="post" class="mt-3">
+        <textarea style="display:none;" name="save_data" aria-hidden="true">{{ cap_result }}</textarea>
+        <input type="hidden" name="date" value="{{ cap_date_value }}">
+        <input type="hidden" name="harvester_capacity" value="{{ cap_capacity_value }}">
+        <button class="btn btn-success btn-lg" type="submit">Add Paths to Database</button>
+      </form>
+      <form action="/newpath/download" method="post" class="mt-3">
+        <textarea style="display:none;" name="save_data" aria-hidden="true">{{ cap_result }}</textarea>
+        <input type="hidden" name="date" value="{{ cap_date_value }}">
+        <input type="hidden" name="harvester_capacity" value="{{ cap_capacity_value }}">
+        <button class="btn btn-success btn-lg" type="submit">Download geoJSON</button>
+      </form>
+      {% endif %}
+
+
+
+      </div>
+    </div>
+</div>
+{% endblock %}

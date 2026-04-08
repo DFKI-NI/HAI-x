@@ -1,0 +1,189 @@
+{% from "area-table.html" import build_table, editable_cells %}
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>{{ tables_lang }}</h1>
+    </div>
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'area' %} active {% endif %}" id="area-tab" data-bs-toggle="tab" data-bs-target="#area-tab-pane" type="button" role="tab" aria-controls="area-tab-pane" aria-selected="{{ 'true' if tab == 'area' else 'false' }}">{{ area_lang }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'path' %} active {% endif %}" id="path-tab" data-bs-toggle="tab" data-bs-target="#path-tab-pane" type="button" role="tab" aria-controls="path-tab-pane" aria-selected="{{ 'true' if tab == 'path' else 'false' }}">{{ path_lang }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'path_raw' %} active {% endif %}" id="path-raw-tab" data-bs-toggle="tab" data-bs-target="#path-raw-tab-pane" type="button" role="tab" aria-controls="path-raw-tab-pane" aria-selected="{{ 'true' if tab == 'path_raw' else 'false' }}">{{ path_raw_lang }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'traj' %} active {% endif %}" id="traj-tab" data-bs-toggle="tab" data-bs-target="#traj-tab-pane" type="button" role="tab" aria-controls="traj-tab-pane" aria-selected="{{ 'true' if tab == 'traj' else 'false' }}">{{ trajectory_lang }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'apa_data' %} active {% endif %}" id="apa-data-tab" data-bs-toggle="tab" data-bs-target="#apa-data-tab-pane" type="button" role="tab" aria-controls="apa-data-tab-pane" aria-selected="{{ 'true' if tab == 'apa_data' else 'false' }}">{{ apa_data_lang }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'bathymetry_data' %} active {% endif %}" id="bathymetry-data-tab" data-bs-toggle="tab" data-bs-target="#bathymetry-data-tab-pane" type="button" role="tab" aria-controls="bathymetry-data-tab-pane" aria-selected="{{ 'true' if tab == 'bathymetry_data' else 'false' }}">{{ bathymetry_data_lang }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'volume_data' %} active {% endif %}" id="volume-data-tab" data-bs-toggle="tab" data-bs-target="#volume-data-tab-pane" type="button" role="tab" aria-controls="volume-data-tab-pane" aria-selected="{{ 'true' if tab == 'volume_data' else 'false' }}">{{ volume_data_lang }}</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Area Tab -->
+        <div class="tab-pane fade show {% if tab == 'area' %} active {% endif %}" id="area-tab-pane" role="tabpanel" aria-labelledby="area-tab">
+            <div class="pt-3">
+                {% if area.df is not none %}
+                <div id="button-row">
+                    {% if (area.editable_cols is defined) and area.editable_cols %}
+                    <button type="button" class="btn btn-secondary" id="save_btn_area" onclick="saveAll('/tables/save/area', '{{area.type}}')" disabled>{{ save_all_lang }}</button>
+                    {% endif %}
+                    <a href="/newarea" class="btn btn-success" id="add_btn">{{ add_area_lang }}</a>
+                    <button type="button" class="btn btn-danger" id="delete_btn" onclick="deleteChecked('/tables/delete/area', '{{area.type}}')">{{ delete_lang }}</button>
+                </div>
+                {{ editable_cells(area.editable_cols) if area.editable_cols }}
+                {{ build_table(area) }}
+                {% else %}
+                <p class="no-data-message" role="alert">There is no data to show.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Path Summary Tab -->
+        <div class="tab-pane fade show {% if tab == 'path' %} active {% endif %}"
+            id="path-tab-pane" role="tabpanel" aria-labelledby="path-tab">
+            <div class="pt-3">
+                {% if path.df is not none and path.df|length > 0 %}
+                <div id="button-row">
+                    <!-- Nur Löschen (per path_id) -->
+                    <button type="button" class="btn btn-danger" id="delete_btn_pat"
+                            onclick="deleteChecked('/tables/delete/path', '{{ path.type }}')">
+                    {{ delete_lang }}
+                    </button>
+                </div>
+
+                {{ build_table(path) }}
+                {% else %}
+                <p class="no-data-message" role="alert">No planned paths found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Path Raw Tab -->
+        <div class="tab-pane fade show {% if tab == 'path_raw' %} active {% endif %}"
+            id="path-raw-tab-pane" role="tabpanel" aria-labelledby="path-raw-tab">
+        <div class="pt-3">
+            {% if path_raw.df is not none and path_raw.df|length > 0 %}
+            <div id="button-row">
+                {% if (path_raw.editable_cols is defined) and path_raw.editable_cols %}
+                <button type="button" class="btn btn-secondary" id="save_btn_path_raw"
+                        onclick="saveAll('/tables/save/path_raw', '{{ path_raw.type }}')" disabled>
+                    {{ save_all_lang }}
+                </button>
+                {% endif %}
+
+                <a href="/newpath/add" class="btn btn-success" id="add_btn">{{ add_path_lang }}</a>
+
+                <button type="button" class="btn btn-danger" id="delete_btn_path_raw"
+                        onclick="deleteChecked('/tables/delete/path_raw', '{{ path_raw.type }}')">
+                {{ delete_lang }}
+                </button>
+            </div>
+
+            {{ editable_cells(path_raw.editable_cols) if path_raw.editable_cols }}
+            {{ build_table(path_raw) }}
+            {% else %}
+            <p class="no-data-message" role="alert">There is no data to show.</p>
+            {% endif %}
+        </div>
+        </div>
+
+
+        <!-- Trajectory Tab -->
+        <div class="tab-pane fade show {% if tab == 'traj' %} active {% endif %}" 
+            id="traj-tab-pane" role="tabpanel" aria-labelledby="traj-tab">
+
+            <div class="pt-3">
+
+                <!-- Load new ROS bag data (bleibt unverändert) -->
+                <div id="load-data-row">
+                    <label class="form-label">Load traveled data for date:</label>
+                    <select class="dropdown form-control w-auto d-inline" 
+                            id="load_traj_date" style="min-width: 200px;">
+                        {% for date in traj.available_dates %}
+                            <option value="{{ date }}">{{ date }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn btn-primary pe-3" id="load_traj_btn"
+                            onclick="loadTrajData('{{ traj.type }}')">
+                        Load
+                    </button>
+                </div>
+
+                <hr>
+
+                <!-- Übersicht: date + start + end -->
+                <h5>Trajectory summary (per day)</h5>
+
+                <button type="button" class="btn btn-danger" id="delete_btn" onclick="deleteChecked('/tables/delete/traj', '{{traj.type}}')">{{ delete_lang }}</button>
+
+                {% if traj.df is not none and traj.df|length > 0 %}
+                    {{ build_table(traj) }}
+                {% else %}
+                    <p class="no-data-message" role="alert">
+                        No trajectory data found.
+                    </p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- APA Data Tab -->
+        <div class="tab-pane fade show {% if tab == 'apa_data' %} active {% endif %}" id="apa-data-tab-pane" role="tabpanel" aria-labelledby="apa-data-tab">
+            <div class="pt-3">
+                {% if apa_data.df is not none and apa_data.df|length > 0 %}
+                <div id="button-row">
+                    <button type="button" class="btn btn-danger" id="delete_btn_apa"
+                            onclick="deleteChecked('/tables/delete/{{ apa_data.type }}', '{{ apa_data.type }}')">{{ delete_lang }}</button>
+                </div>
+                {{ build_table(apa_data) }}
+                {% else %}
+                <p class="no-data-message" role="alert">No APA data found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bathymetry Data Tab -->
+        <div class="tab-pane fade show {% if tab == 'bathymetry_data' %} active {% endif %}" id="bathymetry-data-tab-pane" role="tabpanel" aria-labelledby="bathymetry-data-tab">
+            <div class="pt-3">
+                {% if bathymetry_data.df is not none and bathymetry_data.df|length > 0 %}
+                <div id="button-row">
+                    <button type="button" class="btn btn-danger" id="delete_btn_bathymetry"
+                            onclick="deleteChecked('/tables/delete/{{ bathymetry_data.type }}', '{{ bathymetry_data.type }}')">{{ delete_lang }}</button>
+                </div>
+                {{ build_table(bathymetry_data) }}
+                {% else %}
+                <p class="no-data-message" role="alert">No bathymetry data found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Volume Data Tab -->
+        <div class="tab-pane fade show {% if tab == 'volume_data' %} active {% endif %}" id="volume-data-tab-pane" role="tabpanel" aria-labelledby="volume-data-tab">
+            <div class="pt-3">
+                {% if volume_data.df is not none and volume_data.df|length > 0 %}
+                <div id="button-row">
+                    <button type="button" class="btn btn-danger" id="delete_btn_volume"
+                            onclick="deleteChecked('/tables/delete/{{ volume_data.type }}', '{{ volume_data.type }}')">{{ delete_lang }}</button>
+                </div>
+                {{ build_table(volume_data) }}
+                {% else %}
+                <p class="no-data-message" role="alert">No volume data found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

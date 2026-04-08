@@ -1,0 +1,438 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>{{ area_lang }}</h1>
+  </div>
+
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if not aoi and not capacitated %} active {% endif %}" id="add-tab" data-bs-toggle="tab" data-bs-target="#add-tab-pane" type="button" role="tab" aria-controls="add-tab-pane" aria-selected="{{ 'true' if not aoi and not capacitated else 'false' }}">{{ add_area_lang }}</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if aoi %} active {% endif %}" id="aoi-tab" data-bs-toggle="tab" data-bs-target="#aoi-tab-pane" type="button" role="tab" aria-controls="aoi-tab-pane" aria-selected="{{ 'true' if aoi else 'false' }}">{{ aoi_area_lang }}</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if capacitated %} active {% endif %}" id="cap-aoi-tab" data-bs-toggle="tab" data-bs-target="#cap-aoi-tab-pane" type="button" role="tab" aria-controls="cap-aoi-tab-pane" aria-selected="{{ 'true' if capacitated else 'false' }}">{{ capacitated_aoi_lang }}</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Add Area Tab -->
+    <div class="tab-pane fade show {% if not aoi and not capacitated %} active {% endif %}" id="add-tab-pane" role="tabpanel" aria-labelledby="add-tab">
+      <form action="/newarea/add" id="newarea-add" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+        {% if submit_response %}
+        <div class="row g-3 p-2">
+          <div class="submit-response" role="status" aria-live="polite">{{ submit_response }}</div>
+        </div>
+        {% endif %}
+        <div class="row g-3 p-2">
+          {{  failure_message }}
+          <div class="col-12">
+            <label for="description" class="form-label">{{ description_lang }}</label>
+            <input type="text" class="form-control" name="description" id="description" placeholder="Enter area description&hellip;" value="" required>
+          </div>
+        </div>
+        <div class="row g-3 p-2">
+          <div class="col-sm-4">
+            <label for="typeofarea" class="form-label">{{ toa_lang }}</label>
+            <select class="form-select" name="typeofarea" id="typeofarea" required>
+              <option value="">{{ chose_lang }}</option>
+              <option value="avoid">{{ avoid_lang }}</option>
+              <option value="interest">{{ interest_lang }}</option>
+            </select>
+          </div>
+          <div class="col-sm-4">
+            <label for="date" class="form-label">{{ date_lang }}</label>
+            <input type="date" class="form-control" name="date" id="date" value="" required>
+          </div>
+          <div class="col-sm-4">
+            <label for="images" class="form-label">{{ images_lang }}</label>
+            <input type="file" class="form-control" name="file" id="images" accept="image/*" multiple>
+          </div>
+        </div>
+        <div class="row g-3 p-2">
+          <input id="polygonData" type="hidden" name="polygonData">
+          <div class="col-12">
+            <label class="form-label">Draw polygon on the map</label>
+            <div id="map" class="map-container" style="height: 450px;" role="application" aria-label="Interactive map for drawing area polygons"></div>
+          </div>
+          <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                  var map = L.map('map').setView([52.353089, 9.745069], 14);
+
+                  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  }).addTo(map);
+
+                  var drawnItems = new L.FeatureGroup();
+                  map.addLayer(drawnItems);
+
+                  var drawControl = new L.Control.Draw({
+                      edit: {
+                          featureGroup: drawnItems
+                      },
+                      draw: {
+                          polygon: true,
+                          polyline: false,
+                          rectangle: false,
+                          circle: false,
+                          marker: false,
+                          circlemarker: false
+                      }
+                  });
+                  map.addControl(drawControl);
+
+                  map.on(L.Draw.Event.CREATED, function (event) {
+                      var layer = event.layer;
+                      drawnItems.addLayer(layer);
+                  });
+
+                  var form = document.getElementById('newarea-add');
+                  if (form) {
+                      form.addEventListener('submit', function() {
+                          var polygonData = [];
+                          drawnItems.eachLayer(function(layer) {
+                              if (layer instanceof L.Polygon) {
+                                  polygonData.push(layer.getLatLngs());
+                              }
+                          });
+                          document.getElementById('polygonData').value = JSON.stringify(polygonData);
+                      });
+                  }
+              });
+          </script>
+        </div>
+        <div class="row g-3 p-2 mt-2">
+          <div class="col-sm-12">
+            <button class="btn btn-primary btn-lg" type="submit">{{ submit_lang }}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- AOI Tab -->
+    <div class="tab-pane fade show {% if aoi %} active {% endif %}" id="aoi-tab-pane" role="tabpanel" aria-labelledby="aoi-tab">
+      {% if submit_response %}
+      <div class="row g-3 p-2">
+        <div class="submit-response" role="status" aria-live="polite">{{ submit_response }}</div>
+      </div>
+      {% endif %}
+
+      <p class="p-2">{{ aoi_description_lang }}</p>
+
+      <!-- Step 1: Enter lake name and query dates -->
+      <form action="/newarea/get_dates" method="post" class="needs-validation" novalidate>
+        <div class="row g-3 p-2">
+          <div class="col-sm-6">
+            <label for="lake_query" class="form-label">{{ lake_query_lang }}</label>
+            <input type="text" class="form-control" name="lake_query" id="lake_query" placeholder="e.g. Maschsee, Hannover" value="{{ lake_query_value }}" required>
+          </div>
+          <div class="col-sm-3">
+            <label for="cloud_coverage_query" class="form-label">{{ cloud_coverage_lang }}</label>
+            <input type="number" step="0.1" min="0" max="1" class="form-control" name="cloud_coverage" id="cloud_coverage_query" value="{{ cloud_coverage_value|default('0.5', true) }}" required>
+          </div>
+          <div class="col-sm-3 d-flex align-items-end">
+            <button class="btn btn-primary" type="submit">Get Dates</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Step 2: Show available dates and AOI form (only after dates are fetched) -->
+      {% if available_dates is iterable and available_dates is not string and available_dates|length > 0 %}
+      <div class="row g-3 p-2">
+        <div class="col-12">
+          <div class="editable-info">
+            <strong>Satellite fly-over dates</strong> for <em>{{ sentinel_lake_query|default('', true) }}</em> with cloud coverage less than {{ sentinel_cloud_coverage|default('0.5', true) }}
+          </div>
+          <select class="form-select mt-2" onchange="if(this.value) { document.getElementById('aoi_date').value=this.value; }" aria-label="Select satellite fly-over date">
+            <option value="" selected>Select date&hellip;</option>
+            {% for date in available_dates %}
+            <option value="{{ date }}">{{ date }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <form action="/newarea/get_aois" id="newarea-aoi" method="post" class="needs-validation" novalidate>
+        <input type="hidden" name="lake_query" value="{{ sentinel_lake_query|default('', true) }}">
+        <div class="row g-3 p-2">
+          <div class="col-sm-4">
+            <label for="aoi_date" class="form-label">{{ date_lang }}</label>
+            <input type="date" class="form-control" name="aoi_date" id="aoi_date" value="{{ current_date }}" required>
+          </div>
+          <div class="col-sm-4">
+            <label for="resolution" class="form-label">{{ resolution_lang }}</label>
+            <input type="number" class="form-control" name="resolution" id="resolution" value="{{ resolution_value }}" required>
+          </div>
+          <div class="col-sm-4">
+            <label for="cloud_coverage" class="form-label">{{ cloud_coverage_lang }}</label>
+            <input type="number" step="0.1" min="0" max="1" class="form-control" name="cloud_coverage" id="cloud_coverage" value="{{ cloud_coverage_value }}" required>
+          </div>
+        </div>
+        <div class="row g-3 p-2">
+          <div class="col-sm-4">
+            <label for="n_areas" class="form-label">{{ n_areas_lang }}</label>
+            <input type="number" class="form-control" name="n_areas" id="n_areas" value="{{ n_areas_value }}" required>
+          </div>
+        </div>
+        <div class="row g-3 p-2 mt-2">
+          <div class="col-sm-12">
+            <button class="btn btn-primary btn-lg" type="submit">{{ get_aoi_lang }}</button>
+          </div>
+        </div>
+      </form>
+      {% elif available_dates is string %}
+      <div class="row g-3 p-2">
+        <div class="col-12">
+          <div class="editable-info">{{ available_dates }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if aoi_result %}
+      <div class="map-container fade-in mt-3">
+        {{ aoi_result|safe }}
+      </div>
+      {% endif %}
+
+      {% if aoi_req %}
+      <form action="/newarea/save_aois" method="post" class="mt-3">
+          <button class="btn btn-success btn-lg" type="submit">{{ submit_lang }}</button>
+          <textarea style="display: none;" name="aois_ts" id="aois_ts" aria-hidden="true">{{ aois_to_save }}</textarea>
+          <input type="hidden" name="date_to_save" id="date_to_save" value="{{ date_to_save }}">
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- Capacitated AOI Tab -->
+    <div class="tab-pane fade show {% if capacitated %} active {% endif %}" id="cap-aoi-tab-pane" role="tabpanel" aria-labelledby="cap-aoi-tab">
+      <p class="p-2">Calculate areas of interest based on the capacity of the weed harvester.</p>
+
+      {% if capacitated_response %}
+      <div class="row g-3 p-2">
+        <div class="submit-response" role="status" aria-live="polite">{{ capacitated_response }}</div>
+      </div>
+      {% endif %}
+
+      <form action="/newarea/capacitated_aoi" method="post" class="needs-validation" novalidate>
+        <div class="row g-3 p-2">
+          <div class="col-sm-4">
+            <label for="cap_lake_date_select" class="form-label">{{ lake_query_lang }} &amp; {{ date_lang }}</label>
+            {% if cap_lake_date_options is defined and cap_lake_date_options|length > 0 %}
+            <select class="form-select" id="cap_lake_date_select" required
+                    onchange="var parts=this.value.split('||'); document.getElementById('cap_lake_query_hidden').value=parts[0]; document.getElementById('cap_date_hidden').value=parts[1];">
+              <option value="" {% if not cap_lake_value or not cap_date_value %}selected{% endif %}>Select lake &amp; date&hellip;</option>
+              {% for opt in cap_lake_date_options %}
+              <option value="{{ opt.lake_name }}||{{ opt.date }}" {% if cap_lake_value == opt.lake_name and cap_date_value == opt.date %}selected{% endif %}>{{ opt.lake_name }} — {{ opt.date }}</option>
+              {% endfor %}
+            </select>
+            {% else %}
+            <select class="form-select" disabled>
+              <option>No volume data available</option>
+            </select>
+            {% endif %}
+            <input type="hidden" name="lake_query" id="cap_lake_query_hidden" value="{{ cap_lake_value|default('', true) }}">
+            <input type="hidden" name="date" id="cap_date_hidden" value="{{ cap_date_value|default('', true) }}">
+          </div>
+          <div class="col-sm-4">
+            <label for="cap_harvester_capacity" class="form-label">Harvester Capacity (m&sup3;)</label>
+            <input type="number" class="form-control" name="harvester_capacity" id="cap_harvester_capacity" value="{{ cap_capacity_value|default('20', true) }}" required>
+          </div>
+        </div>
+        <div class="row g-3 p-2 mt-2">
+          <div class="col-sm-12">
+            <button class="btn btn-primary btn-lg" type="submit" {% if not cap_lake_date_options or cap_lake_date_options|length == 0 %}disabled{% endif %}>{{ capacitated_aoi_lang }}</button>
+          </div>
+        </div>
+      </form>
+
+
+      {% if capacitated_result %}
+      <div id="capacitated-map" class="map-container fade-in mt-3" style="height: 450px;"></div>
+
+      {% if capacitated_save_data %}
+      <form action="/newarea/capacitated_aoi/save" method="post" class="mt-3">
+        <textarea style="display: none;" name="save_data" aria-hidden="true">{{ capacitated_save_data }}</textarea>
+        <input type="hidden" name="lake_name" value="{{ cap_lake_value }}">
+        <input type="hidden" name="date" value="{{ cap_date_value }}">
+        <input type="hidden" name="harvester_capacity" value="{{ cap_capacity_value }}">
+        <button class="btn btn-success btn-lg" type="submit">Add to Database</button>
+      </form>
+      {% endif %}
+
+      <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var geojsonData = {{ capacitated_result | safe }};
+
+        var bmap = L.map('capacitated-map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(bmap);
+
+        // Volumen-Range bestimmen (für Skala & Normierung)
+        var volumes = geojsonData.features
+            .map(f => typeof f.properties.volume === 'number' ? f.properties.volume : 0);
+        var minV = Math.min(...volumes);
+        var maxV = Math.max(...volumes);
+        var spanV = (maxV - minV) || 1;
+
+        // Farbskala: blau (niedrig) -> rot (hoch)
+        function getColorFromVolume(v) {
+            const norm = Math.min(Math.max((v - minV) / spanV, 0), 1); // 0..1
+            const r = Math.round(255 * norm);
+            const g = 80;                            // konstante leichte Beimischung
+            const b = Math.round(255 * (1 - norm));
+            return `rgb(${r},${g},${b})`;
+        }
+
+        // Cluster-Farben: feste Palette für verschiedene Cluster
+        var clusterColors = [
+            '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+            '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4',
+            '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000',
+            '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9'
+        ];
+
+        // Cluster-IDs sammeln
+        var clusterIdSet = new Set();
+        geojsonData.features.forEach(function(f) {
+            if (f.properties.cluster_id != null) clusterIdSet.add(f.properties.cluster_id);
+        });
+        var clusterIdList = Array.from(clusterIdSet).sort(function(a,b){ return a - b; });
+        var clusterColorMap = {};
+        clusterIdList.forEach(function(cid, i) {
+            clusterColorMap[cid] = clusterColors[i % clusterColors.length];
+        });
+
+        var layer = L.geoJSON(geojsonData, {
+            style: function (feature) {
+                const v = feature.properties.volume || 0;
+                const cid = feature.properties.cluster_id;
+                const borderColor = (cid != null && clusterColorMap[cid]) ? clusterColorMap[cid] : '#555';
+                return {
+                    color: borderColor,
+                    weight: 2,
+                    fillColor: getColorFromVolume(v),
+                    fillOpacity: 0.7
+                };
+            },
+            onEachFeature: function (feature, layer) {
+                const p = feature.properties || {};
+                layer.bindPopup(
+                    `<b>Cell ID:</b> ${p.cell_id ?? '-'}<br>
+                    <b>Volume:</b> ${typeof p.volume === 'number' ? p.volume.toFixed(2) : '-'} <br>
+                    <b>Cluster:</b> ${p.cluster_id ?? '-'}<br>
+                    <b>Valid:</b> ${p.cluster_valid ?? '-'}<br>
+                    <b>Explanation:</b> ${p.explanation ?? '-'}`
+                );
+            }
+        }).addTo(bmap);
+
+        bmap.fitBounds(layer.getBounds());
+
+        // Begrenzungslinien (Convex Hull) pro Cluster zeichnen
+        clusterIdList.forEach(function(cid) {
+            var pts = [];
+            geojsonData.features.forEach(function(f) {
+                if (f.properties.cluster_id !== cid) return;
+                var geom = f.geometry;
+                // Alle Koordinaten aus der Geometrie sammeln
+                function extractCoords(coords) {
+                    if (typeof coords[0] === 'number') {
+                        pts.push([coords[1], coords[0]]); // [lat, lon]
+                    } else {
+                        coords.forEach(function(c) { extractCoords(c); });
+                    }
+                }
+                if (geom && geom.coordinates) extractCoords(geom.coordinates);
+            });
+
+            if (pts.length < 3) return;
+
+            // Convex Hull berechnen (Graham Scan)
+            function cross(O, A, B) {
+                return (A[0]-O[0])*(B[1]-O[1]) - (A[1]-O[1])*(B[0]-O[0]);
+            }
+            var sorted = pts.slice().sort(function(a,b) { return a[0]-b[0] || a[1]-b[1]; });
+            var lower = [];
+            for (var i = 0; i < sorted.length; i++) {
+                while (lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], sorted[i]) <= 0)
+                    lower.pop();
+                lower.push(sorted[i]);
+            }
+            var upper = [];
+            for (var i = sorted.length - 1; i >= 0; i--) {
+                while (upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], sorted[i]) <= 0)
+                    upper.pop();
+                upper.push(sorted[i]);
+            }
+            upper.pop();
+            lower.pop();
+            var hull = lower.concat(upper);
+
+            var color = clusterColorMap[cid] || '#555';
+            L.polygon(hull, {
+                color: color,
+                weight: 3,
+                fillOpacity: 0.05,
+                dashArray: '8, 4'
+            }).bindPopup('<b>Cluster ' + cid + '</b>').addTo(bmap);
+        });
+
+        // Legende hinzufügen
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.style.background = 'white';
+            div.style.padding = '8px';
+            div.style.borderRadius = '4px';
+            div.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+            div.style.lineHeight = '1.2em';
+
+            // kleine Gradientenleiste (blau -> rot)
+            const gradientId = 'vol-gradient-' + Math.random().toString(36).slice(2);
+            div.innerHTML = `
+              <div style="font-weight:600; margin-bottom:4px;">Volumen</div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span>${minV.toFixed(1)}</span>
+                <div style="height:10px; width:120px; background: linear-gradient(to right, rgb(0,80,255), rgb(255,80,0)); border:1px solid #999;"></div>
+                <span>${maxV.toFixed(1)}</span>
+              </div>
+              <div style="margin-top:4px; font-size:12px;">
+                <span style="color:rgb(0,80,255);">Blau</span> = niedrig &nbsp;•&nbsp; 
+                <span style="color:rgb(255,80,0);">Rot</span> = hoch
+              </div>
+            `;
+            return div;
+        };
+        legend.addTo(bmap);
+
+        // Cluster-Legende
+        if (clusterIdList.length > 0) {
+            var clusterLegend = L.control({ position: 'bottomleft' });
+            clusterLegend.onAdd = function () {
+                var div = L.DomUtil.create('div', 'info legend');
+                div.style.background = 'white';
+                div.style.padding = '8px';
+                div.style.borderRadius = '4px';
+                div.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+                div.style.lineHeight = '1.4em';
+                var html = '<div style="font-weight:600; margin-bottom:4px;">Cluster</div>';
+                clusterIdList.forEach(function(cid) {
+                    var c = clusterColorMap[cid];
+                    html += '<div><span style="display:inline-block;width:14px;height:14px;background:' + c + ';margin-right:6px;vertical-align:middle;border:1px solid #999;"></span>Cluster ' + cid + '</div>';
+                });
+                div.innerHTML = html;
+                return div;
+            };
+            clusterLegend.addTo(bmap);
+        }
+      });
+      </script>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

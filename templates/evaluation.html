@@ -1,0 +1,39 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Evaluation</h2>
+
+    <form action="/evaluation" method="post">
+        <div class="row g-3 p-2 data_row" input="evaluation_input">
+            <div class="col-sm-4 p-2">
+                    <label for="evaluation_date" class="form-label">Date:</label>
+
+                    <select class="form-select w-auto d-inline"
+                            id="evaluation_date"
+                            name="evaluation_date"
+                            style="min-width: 200px;">
+                        {% for date in available_dates %}
+                        <option value="{{ date }}" {% if selected_date == date %}selected{% endif %}>
+                            {{ date }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-bottom: 20px;">Generate</button>
+    </form>
+
+
+    <div class="map-container">
+        {{ fig|safe }}
+    </div>
+
+    {% if approve_eval %}
+    <form action="/evaluation_save" method="post">
+        <button type="submit" class="btn btn-primary" >Accept</button>
+    </form>
+    {% endif %}
+
+
+{% endblock %}

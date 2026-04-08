@@ -1,0 +1,235 @@
+[33mcommit d43fac74cae4ba4a28371f335234de0abfc4f977[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: akluener <andre.kluener@dfki.de>
+Date:   Wed Apr 8 16:11:05 2026 +0200
+
+    new style
+
+[33mcommit d2f582dbbf22d9566c0a276509b6261d417b6d82[m
+Author: akluener <andre.kluener@dfki.de>
+Date:   Wed Apr 8 16:02:46 2026 +0200
+
+    new style
+
+[33mcommit 1c4408126e0b7c82ca52a13cbe69a9ac8df09c96[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: akluener <andre.kluener@dfki.de>
+Date:   Wed Apr 8 15:58:42 2026 +0200
+
+    restart
+
+[33mcommit 8a3565f21d39814e6bb7099fb1483ba6d315b960[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Sep 3 13:54:09 2025 +0200
+
+    Delete req.txt
+
+[33mcommit 596f7d90a2d91349b89c6b0a03299bb2faaab970[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Sep 3 13:51:05 2025 +0200
+
+    Update README.md
+
+[33mcommit 78279d27c25fb121df4d13e01f4497afb22e131b[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Sep 3 13:27:22 2025 +0200
+
+    Update README.md
+
+[33mcommit 93b480da20bc1df3bf1bc8282285e114ada82682[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Sep 3 13:24:19 2025 +0200
+
+    Create README.md
+
+[33mcommit beb078410621bfa74e3436e60a0761608701f232[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Sep 3 11:55:17 2025 +0200
+
+    Update README.md
+
+[33mcommit 3bcc2868b87a2bbfe039bda644e93512f64be9ea[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Sep 3 11:54:05 2025 +0200
+
+    Update README.md
+
+[33mcommit 9a0f02bc53130ad9a70cc838baa0217d56ac456a[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Sep 3 11:51:07 2025 +0200
+
+    Update README.md
+
+[33mcommit 4c25f649f48350d8ef8c54551edb597617c6b077[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Sep 3 11:40:56 2025 +0200
+
+    Update dockerfile
+
+[33mcommit 358425ee7ce7724147fd98644259272e322b86bf[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Tue Sep 2 22:40:23 2025 +0200
+
+    Update database.py
+
+[33mcommit ba26108daf21168d4a27a97a91f32564ea5f4ff7[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Tue Sep 2 21:32:11 2025 +0200
+
+    Update newarea.html
+
+[33mcommit 7b0ddef1869b0ec3838eee228298dbe8fee9c87a[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Tue Sep 2 21:31:10 2025 +0200
+
+    Update new_area.py
+
+[33mcommit 107c621fd368a5e4e78b26824837dd03e364b3d9[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Tue Sep 2 17:39:02 2025 +0200
+
+    Update new_area.py
+
+[33mcommit 4b4b2872bd7938c89b5f72e4baddfa0f4b4b51a1[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Tue Sep 2 17:31:12 2025 +0200
+
+    Update language_variables_german.py
+
+[33mcommit 05dd42d55744ac3832940a3bd0a009edce81634b[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Tue Sep 2 17:30:45 2025 +0200
+
+    Update language_variables_english.py
+
+[33mcommit 3b11d14021419e7ccfb72a4660664181cb827225[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Tue Sep 2 17:30:15 2025 +0200
+
+    Update routes.py
+
+[33mcommit 082dc0da38d02b61024efaa51f10543988051725[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Fri Aug 29 14:16:00 2025 +0200
+
+    Delete services/estimate-weeding-areas-from-apa/notebooks directory
+
+[33mcommit 0f96e00a93d6ae197a85673655aaf88d5d3ed71e[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Thu Aug 28 11:06:43 2025 +0200
+
+    Update navbar.html
+
+[33mcommit d38b343bae2b2e81125eace2a097fa28eb8c1169[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Thu Aug 28 11:05:26 2025 +0200
+
+    Update init_haix_dash.py
+
+[33mcommit 7c7021a0a9b84cb477392a4079d6609c80cb7bf5[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Thu Aug 28 11:03:24 2025 +0200
+
+    Update init_haix_dash.py
+
+[33mcommit 657ce8f1658e9eae02355be7c0a5318d618fc2e2[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Thu Aug 28 08:56:37 2025 +0200
+
+    Update init_haix_dash.py
+
+[33mcommit 3271bac5112e5bbe5608a11a31b95a5fba595eeb[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Thu Aug 28 08:16:36 2025 +0200
+
+    Update dash_util.py
+
+[33mcommit 171153fec91a65493bbe9d15e62b1838c70e8f0c[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Thu Aug 28 08:15:41 2025 +0200
+
+    Update init_haix_dash.py
+
+[33mcommit 793a5404b731ebf6ad026dad16f8f9938a203ba3[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 12:47:57 2025 +0200
+
+    Update init_haix_dash.py
+
+[33mcommit 394c833c6411a9236f81a2efcf1be1e2d759d71e[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 12:33:51 2025 +0200
+
+    Update newpath.html
+
+[33mcommit 17e99df12b5ac9e6994cec42d3c351af553079c2[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 12:20:05 2025 +0200
+
+    Update language_variables_english.py
+
+[33mcommit 615f690e97b24918dec679faaacf2f3b8dcee28e[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 11:49:40 2025 +0200
+
+    Update LICENSE
+
+[33mcommit 73f55fab2638f8482b00a94cf1181e3b7812783e[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 09:56:01 2025 +0200
+
+    Update new_area.py
+    
+    fixed a bug in the new area routine
+
+[33mcommit 39640507b55ca14b172e1483617c07fbfd8e6307[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 08:47:55 2025 +0200
+
+    Update README.md
+
+[33mcommit da61b7848d2dcc2426c1696580ce22e75176761b[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 08:47:32 2025 +0200
+
+    Update README.md
+
+[33mcommit dd2bc0b00adee145fd82575a2a8a6d1dbfaf36e3[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 08:35:48 2025 +0200
+
+    Update newpath.html
+
+[33mcommit eebc1e22869d8171dfe8162508ca4c8a39d4f17f[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 08:35:07 2025 +0200
+
+    Update compose.yaml
+
+[33mcommit dd9e52c8ed9820dd62a852cc516b74129d744cc5[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 08:30:49 2025 +0200
+
+    Add files via upload
+
+[33mcommit 2268637bc8ed3fd006b1feca14396ed2b5a64690[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Wed Aug 27 08:27:13 2025 +0200
+
+    Update routes.py
+
+[33mcommit 2fff18e33fb8857bf23114d662a73a93da3063f0[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Mon Aug 25 17:08:58 2025 +0200
+
+    Update README.md
+
+[33mcommit d59e5827e9c02aeea31814817afab31fb5025c62[m
+Author: andredfki <143592695+andredfki@users.noreply.github.com>
+Date:   Mon Aug 25 17:06:51 2025 +0200
+
+    Create LICENSE
+
+[33mcommit 4513c65576e5463228a8fd54e03c4d593b415dc8[m
+Author: akluener <andre.kluener@dfki.de>
+Date:   Thu Aug 21 08:11:54 2025 +0200
+
+    initial commit

@@ -1,0 +1,52 @@
+{% macro editable_cells(list) %}
+    <div class="editable-info" role="note">
+        <span aria-hidden="true">&#9998;</span> These cells can be double-clicked to edit:
+        {% for label in list %}
+        <strong>{{ label.upper() ~ ',' if not loop.last else label.upper() }}</strong>
+        {% endfor %}
+    </div>
+{% endmacro %}
+
+{% macro build_table(info) %}
+    <div class="table-responsive">
+    <table class="table table-striped table-hover" id="data_table_{{info.type}}" aria-label="Data table for {{ info.type }}">
+        <thead>
+            <tr id="table-head">
+                <th scope="col">
+                    <input onclick='checkAll("{{info.type}}")' class="form-check-input" type="checkbox" id="all_checkbox_{{info.type}}" aria-label="Select all rows">
+                </th>
+                {% for col in info.df.columns %}
+                {% if col.lower() not in info.hidden_cols %}
+                <th scope="col">{{ col.upper() }}</th>
+                {% endif %}
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            {% for i, row in info.df.iterrows() %}
+                {% if (info.max_rows is not defined or info.filter is not defined) or (loop.index <= info.max_rows * info.filter) %}
+                <tr id="table-{{i}}">
+                    <td>
+                        <input class="form-check-input" type="checkbox" name="checkbox" id="checkbox_{{info.type}}_{{i}}" aria-label="Select row {{i}}">
+                    </td>
+                    {% for col in info.df.columns %}
+                    {% if col.lower() not in info.hidden_cols %}
+                    {% if col.lower() in info.editable_cols %}
+                    <td ondblclick='editValue("{{info.type}}", "{{col}}", "{{i}}")' id="editable_{{info.type}}_{{col}}_{{i}}" title="Double-click to edit">{{ row[col] }}</td>
+                    {% elif col.lower() not in info.hidden_cols -%}
+                    <td>{{ row[col] }}</td>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% if info.max_rows is defined %}
+    <div class="text-center mt-3">
+        <button type="button" class="btn btn-secondary" id="show_more_{{info.type}}" value="{{info.filter}}" onclick="updateTable('{{info.type}}', 'traj_dates', 'show_more_{{info.type}}')">Show more</button>
+    </div>
+    {% endif %}
+{% endmacro %}

@@ -1,0 +1,535 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>{{ data_lang }}</h1>
+  </div>
+
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'bathymetry' or not active_tab %} active {% endif %}" id="bathymetry-tab" data-bs-toggle="tab" data-bs-target="#bathymetry-tab-pane" type="button" role="tab" aria-controls="bathymetry-tab-pane" aria-selected="{{ 'true' if active_tab == 'bathymetry' or not active_tab else 'false' }}">{{ bathymetry_lang }}</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'apa' %} active {% endif %}" id="apa-tab" data-bs-toggle="tab" data-bs-target="#apa-tab-pane" type="button" role="tab" aria-controls="apa-tab-pane" aria-selected="{{ 'true' if active_tab == 'apa' else 'false' }}">{{ apa_index_lang }}</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'volume' %} active {% endif %}" id="volume-tab" data-bs-toggle="tab" data-bs-target="#volume-tab-pane" type="button" role="tab" aria-controls="volume-tab-pane" aria-selected="{{ 'true' if active_tab == 'volume' else 'false' }}">{{ plant_volume_lang }}</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Bathymetry Tab -->
+    <!-- Note: Currently only the Maschsee is supported for bathymetry data -->
+    <div class="tab-pane fade show {% if active_tab == 'bathymetry' or not active_tab %} active {% endif %}" id="bathymetry-tab-pane" role="tabpanel" aria-labelledby="bathymetry-tab">
+      <p class="p-2">{{ bathymetry_description_lang }}</p>
+
+      {% if bathymetry_response %}
+      <div class="row g-3 p-2">
+        <div class="submit-response" role="status" aria-live="polite">{{ bathymetry_response }}</div>
+      </div>
+      {% endif %}
+
+      <form action="/data/bathymetry" method="post" class="needs-validation" novalidate>
+        <div class="row g-3 p-2">
+          <div class="col-sm-6">
+            <label for="bathymetry_lake" class="form-label">{{ lake_name_lang }}</label>
+            <input type="text" class="form-control" name="osm_query" id="bathymetry_lake" placeholder="e.g. Maschsee, Hannover, Germany" value="{{ bathymetry_lake_value|default('Maschsee', true) }}">
+          </div>
+          <div class="col-sm-6 d-flex align-items-end">
+            <button class="btn btn-primary" type="submit">{{ get_bathymetry_lang }}</button>
+          </div>
+        </div>
+      </form>
+
+      {% if bathymetry_geojson %}
+      <div id="bathymetry-map" class="map-container fade-in mt-3" style="height: 450px;"></div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var geojsonData = {{ bathymetry_geojson|safe }};
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                var bmap = L.map('bathymetry-map');
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(bmap);
+
+                var allPoints = [];
+                var depths = geojsonData.features.map(function(f) {
+                    return f.properties.estimated_depth || f.properties.depth || 0;
+                });
+                var minDepth = Math.min.apply(null, depths);
+                var maxDepth = Math.max.apply(null, depths);
+                var depthRange = maxDepth - minDepth || 1;
+
+                geojsonData.features.forEach(function(feature) {
+                    var coords = feature.geometry.coordinates;
+                    var lat = coords[1];
+                    var lon = coords[0];
+                    var depth = feature.properties.estimated_depth || feature.properties.depth || 0;
+                    var norm = (depth - minDepth) / depthRange;
+
+                    var r = Math.round(255 * (1 - norm));
+                    var g = Math.round(100 * (1 - norm));
+                    var b = Math.round(255 * norm);
+                    var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+
+                    L.circleMarker([lat, lon], {
+                        radius: 4,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.8,
+                        weight: 1
+                    }).bindPopup(
+                        '<strong>Depth:</strong> ' + depth.toFixed(2) + ' m<br>' +
+                        '<strong>Lat:</strong> ' + lat.toFixed(6) + '<br>' +
+                        '<strong>Lon:</strong> ' + lon.toFixed(6)
+                    ).addTo(bmap);
+                    allPoints.push([lat, lon]);
+                });
+
+                if (allPoints.length > 0) {
+                    bmap.fitBounds(L.latLngBounds(allPoints).pad(0.1));
+                }
+
+                var legend = L.control({position: 'bottomright'});
+                legend.onAdd = function() {
+                    var div = L.DomUtil.create('div', 'info legend');
+                    div.style.background = 'white';
+                    div.style.padding = '8px';
+                    div.style.borderRadius = '4px';
+                    div.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+                    div.innerHTML = '<strong>Depth (m)</strong><br>' +
+                        '<span style="color:rgb(255,100,0);">&#9679;</span> ' + minDepth.toFixed(1) + ' (shallow)<br>' +
+                        '<span style="color:rgb(0,0,255);">&#9679;</span> ' + maxDepth.toFixed(1) + ' (deep)';
+                    return div;
+                };
+                legend.addTo(bmap);
+            }
+        });
+      </script>
+      {% endif %}
+
+      {% if bathymetry_save_data %}
+      <form action="/data/bathymetry/save" method="post" class="mt-3">
+        <textarea style="display: none;" name="save_data" aria-hidden="true">{{ bathymetry_save_data }}</textarea>
+        <input type="hidden" name="lake_name" value="{{ bathymetry_lake_value }}">
+        <button class="btn btn-success btn-lg" type="submit">{{ save_to_db_lang }}</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- APA Index Tab -->
+    <div class="tab-pane fade show {% if active_tab == 'apa' %} active {% endif %}" id="apa-tab-pane" role="tabpanel" aria-labelledby="apa-tab">
+      <p class="p-2">{{ apa_description_lang }}</p>
+
+      {% if apa_response %}
+      <div class="row g-3 p-2">
+        <div class="submit-response" role="status" aria-live="polite">{{ apa_response }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Step 1: Enter lake name and query dates -->
+      <form action="/data/apa/get_dates" method="post" class="needs-validation" novalidate>
+        <div class="row g-3 p-2">
+          <div class="col-sm-6">
+            <label for="apa_lake_query" class="form-label">{{ lake_name_lang }}</label>
+            <input type="text" class="form-control" name="lake_query" id="apa_lake_query" placeholder="e.g. Maschsee, Hannover" value="{{ apa_lake_query_value|default('', true) }}" required>
+          </div>
+          <div class="col-sm-3">
+            <label for="apa_cloud_coverage_query" class="form-label">{{ cloud_coverage_lang }}</label>
+            <input type="number" step="0.1" min="0" max="1" class="form-control" name="cloud_coverage" id="apa_cloud_coverage_query" value="{{ apa_cloud_coverage_value|default('0.5', true) }}" required>
+          </div>
+          <div class="col-sm-3 d-flex align-items-end">
+            <button class="btn btn-primary" type="submit">Get Dates</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Step 2: Show available dates and APA form (only after dates are fetched) -->
+      {% if apa_available_dates is iterable and apa_available_dates is not string and apa_available_dates|length > 0 %}
+      <div class="row g-3 p-2">
+        <div class="col-12">
+          <div class="editable-info">
+            <strong>Satellite fly-over dates</strong> for <em>{{ apa_sentinel_lake_query|default('', true) }}</em> with cloud coverage less than {{ apa_sentinel_cloud_coverage|default('0.5', true) }}
+          </div>
+          <select class="form-select mt-2" onchange="if(this.value) { document.getElementById('apa_date').value=this.value; }" aria-label="Select satellite fly-over date">
+            <option value="" selected>Select date&hellip;</option>
+            {% for date in apa_available_dates %}
+            <option value="{{ date }}">{{ date }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <form action="/data/apa" method="post" class="needs-validation" novalidate>
+        <input type="hidden" name="lake_query" value="{{ apa_sentinel_lake_query|default('', true) }}">
+        <div class="row g-3 p-2">
+          <div class="col-sm-6">
+            <label for="apa_date" class="form-label">{{ date_lang }}</label>
+            <input type="date" class="form-control" name="date" id="apa_date" value="{{ apa_date_value|default('', true) }}" required>
+          </div>
+          <div class="col-sm-6 d-flex align-items-end">
+            <button class="btn btn-primary" type="submit">{{ get_apa_lang }}</button>
+          </div>
+        </div>
+      </form>
+      {% elif apa_available_dates is string %}
+      <div class="row g-3 p-2">
+        <div class="col-12">
+          <div class="editable-info">{{ apa_available_dates }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if apa_geojson %}
+      <div id="apa-map" class="map-container fade-in mt-3" style="height: 450px;"></div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var geojsonData = {{ apa_geojson|safe }};
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                var apaMap = L.map('apa-map');
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(apaMap);
+
+                var allPoints = [];
+                var apaValues = geojsonData.features.map(function(f) {
+                    return f.properties.apa || f.properties.apa_value || 0;
+                });
+                var minApa = Math.min.apply(null, apaValues);
+                var maxApa = Math.max.apply(null, apaValues);
+                var apaRange = maxApa - minApa || 1;
+
+                geojsonData.features.forEach(function(feature) {
+                    var coords = feature.geometry.coordinates;
+                    var lat = coords[1];
+                    var lon = coords[0];
+                    var apa = feature.properties.apa || feature.properties.apa_value || 0;
+                    var norm = (apa - minApa) / apaRange;
+
+                    // Green (low) to Red (high) color scale for plant density
+                    var r = Math.round(255 * norm);
+                    var g = Math.round(255 * (1 - norm));
+                    var b = 0;
+                    var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+
+                    console.log(coords)
+                    L.circleMarker([lat, lon], {
+                        radius: 4,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.8,
+                        weight: 1
+                    }).bindPopup(
+                        '<strong>APA Index:</strong> ' + apa.toFixed(2) + '<br>' +
+                        '<strong>Lat:</strong> ' + lat.toFixed(6) + '<br>' +
+                        '<strong>Lon:</strong> ' + lon.toFixed(6)
+                    ).addTo(apaMap);
+                    allPoints.push([lat, lon]);
+                });
+
+                if (allPoints.length > 0) {
+                    apaMap.fitBounds(L.latLngBounds(allPoints).pad(0.1));
+                }
+
+                var legend = L.control({position: 'bottomright'});
+                legend.onAdd = function() {
+                    var div = L.DomUtil.create('div', 'info legend');
+                    div.style.background = 'white';
+                    div.style.padding = '8px';
+                    div.style.borderRadius = '4px';
+                    div.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+                    div.innerHTML = '<strong>APA Index</strong><br>' +
+                        '<span style="color:rgb(0,255,0);">&#9679;</span> ' + minApa.toFixed(2) + ' (low)<br>' +
+                        '<span style="color:rgb(255,0,0);">&#9679;</span> ' + maxApa.toFixed(2) + ' (high)';
+                    return div;
+                };
+                legend.addTo(apaMap);
+            }
+        });
+      </script>
+      {% endif %}
+
+      {% if apa_save_data %}
+      <form action="/data/apa/save" method="post" class="mt-3">
+        <textarea style="display: none;" name="save_data" aria-hidden="true">{{ apa_save_data }}</textarea>
+        <input type="hidden" name="lake_name" value="{{ apa_lake_value }}">
+        <button class="btn btn-success btn-lg" type="submit">{{ save_to_db_lang }}</button>
+      </form>
+        <form action="/data/apa/download" method="post" class="mt-3">
+        <textarea style="display: none;" name="save_data" aria-hidden="true">{{ apa_save_data }}</textarea>
+        <input type="hidden" name="lake_name" value="{{ apa_lake_value }}">
+        <button class="btn btn-success btn-lg" type="submit">Download GeoJSON</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- Plant Volume Tab -->
+    <div class="tab-pane fade show {% if active_tab == 'volume' %} active {% endif %}" id="volume-tab-pane" role="tabpanel" aria-labelledby="volume-tab">
+      <p class="p-2">{{ plant_volume_description_lang }}</p>
+
+      {% if volume_response %}
+      <div class="row g-3 p-2">
+        <div class="submit-response" role="status" aria-live="polite">{{ volume_response }}</div>
+      </div>
+      {% endif %}
+
+      <form action="/data/volume" method="post" class="needs-validation" novalidate>
+        <div class="row g-3 p-2">
+          <div class="col-sm-4">
+            <label for="volume_lake" class="form-label">{{ lake_name_lang }}</label>
+            <select class="form-select" name="lake_query" id="volume_lake" required>
+              <option value="" {% if not volume_lake_value %}selected{% endif %}>Select lake&hellip;</option>
+              {% for lake in volume_lakes|default([], true) %}
+              <option value="{{ lake }}" {% if volume_lake_value == lake %}selected{% endif %}>{{ lake }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-4">
+            <label for="volume_date" class="form-label">{{ date_lang }}</label>
+            <select class="form-select" name="date" id="volume_date" required>
+              <option value="" selected>Select date&hellip;</option>
+              {% if volume_date_value %}
+              <option value="{{ volume_date_value }}" selected>{{ volume_date_value }}</option>
+              {% endif %}
+            </select>
+          </div>
+          <div class="col-sm-4 d-flex align-items-end">
+            <button class="btn btn-primary" type="submit">{{ calculate_volume_lang }}</button>
+          </div>
+        </div>
+      </form>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var lakeSelect = document.getElementById('volume_lake');
+          var dateSelect = document.getElementById('volume_date');
+
+          lakeSelect.addEventListener('change', function() {
+            var lakeName = this.value;
+            // Clear existing date options
+            dateSelect.innerHTML = '<option value="" selected>Loading&hellip;</option>';
+
+            if (!lakeName) {
+              dateSelect.innerHTML = '<option value="" selected>Select date&hellip;</option>';
+              return;
+            }
+
+            var formData = new FormData();
+            formData.append('lake_name', lakeName);
+
+            fetch('/data/volume/get_dates', { method: 'POST', body: formData })
+              .then(function(response) { return response.json(); })
+              .then(function(dates) {
+                dateSelect.innerHTML = '<option value="" selected>Select date&hellip;</option>';
+                dates.forEach(function(d) {
+                  var opt = document.createElement('option');
+                  opt.value = d;
+                  opt.textContent = d;
+                  dateSelect.appendChild(opt);
+                });
+              })
+              .catch(function() {
+                dateSelect.innerHTML = '<option value="" selected>Error loading dates</option>';
+              });
+          });
+
+          // If a lake is already selected on page load, trigger date fetch
+          if (lakeSelect.value) {
+            lakeSelect.dispatchEvent(new Event('change'));
+          }
+        });
+      </script>
+
+        {% if volume_result %}
+      <div id="volume-map" class="map-container fade-in mt-3" style="height: 450px;"></div>
+
+      <!-- Volume Filter Slider -->
+      <div class="mt-3 p-3" style="background: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+        <label class="form-label fw-bold">Volume Filter</label>
+        <div class="row align-items-center g-2">
+          <div class="col-auto">
+            <span id="vol-filter-min-label" class="badge bg-success">0.00</span>
+          </div>
+          <div class="col">
+            <input type="range" class="form-range" id="vol-filter-min" min="0" max="100" value="0" step="0.01">
+          </div>
+          <div class="col-auto">
+            <span class="text-muted">Min</span>
+          </div>
+        </div>
+        <div class="row align-items-center g-2 mt-1">
+          <div class="col-auto">
+            <span id="vol-filter-max-label" class="badge bg-danger">0.00</span>
+          </div>
+          <div class="col">
+            <input type="range" class="form-range" id="vol-filter-max" min="0" max="100" value="100" step="0.01">
+          </div>
+          <div class="col-auto">
+            <span class="text-muted">Max</span>
+          </div>
+        </div>
+        <div class="mt-2 text-muted" id="vol-filter-info">
+          Showing <strong id="vol-filter-count">0</strong> of <strong id="vol-filter-total">0</strong> features
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var geojsonData = {{ volume_result|safe }};
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                var volMap = L.map('volume-map');
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(volMap);
+
+                var volumeValues = geojsonData.features.map(function(f) {
+                    return (f.properties.volume != null) ? f.properties.volume : 0;
+                });
+
+                var minVol = Math.min.apply(null, volumeValues);
+                var maxVol = Math.max.apply(null, volumeValues);
+                var VolRange = maxVol - minVol || 1;
+
+                // Store layers with their volume for filtering
+                var featureLayers = [];
+
+                geojsonData.features.forEach(function(feature, idx) {
+                    var coords = feature.geometry.coordinates;
+                    var volu = (feature.properties.volume != null) ? feature.properties.volume : 0;
+                    var norm = (volu - minVol) / VolRange;
+
+                    var r = Math.round(255 * norm);
+                    var g = Math.round(255 * (1 - norm));
+                    var b = 0;
+                    var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+
+                    var latLngs = L.GeoJSON.coordsToLatLngs(coords[0]);
+                    var layer = L.polygon(latLngs, {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.8,
+                        weight: 1
+                    }).bindPopup(
+                        '<strong>Volume:</strong> ' + volu.toFixed(2)
+                    );
+                    layer.addTo(volMap);
+
+                    featureLayers.push({
+                        layer: layer,
+                        latLngs: latLngs,
+                        volume: volu,
+                        feature: feature
+                    });
+                });
+
+                // Fit map bounds
+                var allPoints = featureLayers.map(function(fl) { return fl.latLngs; });
+                if (allPoints.length > 0) {
+                    volMap.fitBounds(L.latLngBounds(allPoints).pad(0.1));
+                }
+
+                // Legend
+                var legend = L.control({position: 'bottomright'});
+                legend.onAdd = function() {
+                    var div = L.DomUtil.create('div', 'info legend');
+                    div.style.background = 'white';
+                    div.style.padding = '8px';
+                    div.style.borderRadius = '4px';
+                    div.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+                    div.innerHTML = '<strong>Volume</strong><br>' +
+                        '<span style="color:rgb(0,255,0);">&#9679;</span> ' + minVol.toFixed(2) + ' (low)<br>' +
+                        '<span style="color:rgb(255,0,0);">&#9679;</span> ' + maxVol.toFixed(2) + ' (high)';
+                    return div;
+                };
+                legend.addTo(volMap);
+
+                // --- Volume Filter Slider Logic ---
+                var sliderMin = document.getElementById('vol-filter-min');
+                var sliderMax = document.getElementById('vol-filter-max');
+                var labelMin = document.getElementById('vol-filter-min-label');
+                var labelMax = document.getElementById('vol-filter-max-label');
+                var countEl = document.getElementById('vol-filter-count');
+                var totalEl = document.getElementById('vol-filter-total');
+
+                // Set slider range to actual volume values
+                sliderMin.min = minVol;
+                sliderMin.max = maxVol;
+                sliderMin.value = minVol;
+                sliderMin.step = ((maxVol - minVol) / 1000).toFixed(4);
+
+                sliderMax.min = minVol;
+                sliderMax.max = maxVol;
+                sliderMax.value = maxVol;
+                sliderMax.step = ((maxVol - minVol) / 1000).toFixed(4);
+
+                labelMin.textContent = minVol.toFixed(2);
+                labelMax.textContent = maxVol.toFixed(2);
+                totalEl.textContent = featureLayers.length;
+                countEl.textContent = featureLayers.length;
+
+                function applyVolumeFilter() {
+                    var filterMinVal = parseFloat(sliderMin.value);
+                    var filterMaxVal = parseFloat(sliderMax.value);
+
+                    // Ensure min <= max
+                    if (filterMinVal > filterMaxVal) {
+                        sliderMin.value = filterMaxVal;
+                        filterMinVal = filterMaxVal;
+                    }
+
+                    labelMin.textContent = filterMinVal.toFixed(2);
+                    labelMax.textContent = filterMaxVal.toFixed(2);
+
+                    var visibleCount = 0;
+                    var filteredFeatures = [];
+
+                    featureLayers.forEach(function(fl) {
+                        if (fl.volume >= filterMinVal && fl.volume <= filterMaxVal) {
+                            if (!volMap.hasLayer(fl.layer)) {
+                                fl.layer.addTo(volMap);
+                            }
+                            visibleCount++;
+                            filteredFeatures.push(fl.feature);
+                        } else {
+                            if (volMap.hasLayer(fl.layer)) {
+                                volMap.removeLayer(fl.layer);
+                            }
+                        }
+                    });
+
+                    countEl.textContent = visibleCount;
+
+                    // Update save_data textarea with filtered features
+                    var saveTextarea = document.getElementById('volume-save-data');
+                    if (saveTextarea) {
+                        var filteredGeoJson = JSON.parse(JSON.stringify(geojsonData));
+                        filteredGeoJson.features = filteredFeatures;
+                        saveTextarea.value = JSON.stringify(filteredGeoJson);
+                    }
+                }
+
+                sliderMin.addEventListener('input', applyVolumeFilter);
+                sliderMax.addEventListener('input', applyVolumeFilter);
+            }
+        });
+      </script>
+      {% endif %}
+
+      {% if volume_result2 %}
+      <div class="map-container fade-in mt-3">
+        {{ volume_result|safe }}
+      </div>
+      {% endif %}
+
+      {% if volume_save_data %}
+      <form action="/data/volume/save" method="post" class="mt-3">
+        <textarea style="display: none;" name="save_data" id="volume-save-data" aria-hidden="true">{{ volume_save_data }}</textarea>
+        <input type="hidden" name="lake_name" value="{{ volume_lake_value }}">
+        <input type="hidden" name="date" value="{{ volume_date_value }}">
+        <button class="btn btn-success btn-lg" type="submit">{{ save_to_db_lang }}</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
