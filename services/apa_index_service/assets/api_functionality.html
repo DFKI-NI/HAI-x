@@ -1,0 +1,141 @@
+<html>
+<head>
+    <title>Satellite Data Analysis API</title>
+</head>
+<body>
+<h1>FastAPI Application for Satellite Data Analysis</h1>
+<p>This API provides endpoints for retrieving and analyzing satellite data, specifically for identifying areas of
+    interest based on plant intensity in satellite images.</p>
+
+<h2>Authentication and Credentials</h2>
+<p>All data endpoints require valid Sentinel Hub credentials. You must provide the following fields:</p>
+<ul>
+    <li><code>instance_id</code> - Your Sentinel Hub service instance ID.</li>
+    <li><code>client_id</code> - OAuth client ID from Sentinel Hub dashboard.</li>
+    <li><code>client_secret</code> - OAuth client secret corresponding to the client ID.</li>
+</ul>
+<p>You can pass these credentials in each request body (recommended based on the current API), or call the helper endpoint below.</p>
+
+<h3>/api/set_credentials</h3>
+<p>Initializes Sentinel Hub configuration with your credentials. You can call this endpoint either via POST (JSON body) or via a GET URL with query parameters.</p>
+
+<h4>POST</h4>
+<em>Request Body:</em>
+<pre>
+{
+  "instance_id": "your-instance-id",
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret"
+}
+</pre>
+<em>Returns:</em> JSON confirming initialization.
+
+<h4>GET (via URL)</h4>
+<p>Example URL (replace placeholders with your values):</p>
+<pre>
+/api/set_credentials?instance_id=YOUR_INSTANCE_ID&client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET
+</pre>
+<p>You can paste this directly in the browser address bar or use with tools like curl:</p>
+<pre>
+curl "http://localhost:8000/api/set_credentials?instance_id=YOUR_INSTANCE_ID&client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET"
+</pre>
+
+<h2>Available Endpoints</h2>
+<ul>
+    <li><strong>GET /</strong><br>
+        <em>Description:</em> Root endpoint that provides this documentation<br>
+        <em>Parameters:</em> None<br>
+        <em>Returns:</em> Documentation about all available API endpoints
+    </li>
+    <li><strong>POST /api/get_apa</strong><br>
+        <em>Description:</em> Retrieves satellite data for a specified time period or day using JSON body<br>
+        <em>Required credentials in body:</em> <code>instance_id</code>, <code>client_id</code>, <code>client_secret</code><br>
+        <em>Request Body:</em> JSON with either:
+        <ul>
+            <li>Date range format:
+                <pre>
+{
+  "start": "2025-01-01",
+  "stop": "2025-01-31",
+  "resolution_in_m": 10,
+  "max_cloud_coverage": 0.5,
+  "lake_query": "Maschsee, Hannover, Germany",
+  "copernicus_data_service": "ALL-BANDS-TRUE-COLOR",
+  "instance_id": "your-instance-id",
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "geojson_file": false,
+  "full_apa": false
+}
+                </pre>
+            </li>
+            <li>Single day format:
+                <pre>
+{
+  "day": "2025-01-08",
+  "resolution_in_m": 10,
+  "max_cloud_coverage": 0.5,
+  "lake_query": "Maschsee, Hannover, Germany",
+  "copernicus_data_service": "ALL-BANDS-TRUE-COLOR",
+  "instance_id": "your-instance-id",
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "geojson_file": false,
+  "full_apa": false
+}
+                </pre>
+            </li>
+        </ul>
+        <em>Returns:</em> Dictionary with dates as keys and JSON-encoded satellite data as values
+    </li>
+
+    <li><strong>POST /api/get_available_dates</strong><br>
+        <em>Description:</em> Checks for available dates with satellite images for a specified time frame<br>
+        <em>Required credentials in body:</em> <code>instance_id</code>, <code>client_id</code>, <code>client_secret</code><br>
+        <em>Request Body:</em> JSON with start and end dates:
+        <pre>
+{
+  "start": "2025-01-01",
+  "end": "2025-01-31",
+  "resolution_in_m": 10,
+  "lake_query": "Maschsee, Hannover, Germany",
+  "copernicus_data_service": "ALL-BANDS-TRUE-COLOR",
+  "instance_id": "your-instance-id",
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret"
+}
+        </pre>
+        <em>Returns:</em> Dictionary with available dates and their time slots
+    </li>
+</ul>
+
+<h2>Example Usage</h2>
+<h3>POST Endpoints (JSON Body)</h3>
+<pre>
+POST /api/get_apa
+Content-Type: application/json
+
+{
+  "day": "2025-01-08",
+  "resolution_in_m": 20,
+  "instance_id": "your-instance-id",
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret"
+}
+</pre>
+
+<pre>
+POST /api/get_available_dates
+Content-Type: application/json
+
+{
+  "start": "2025-01-01",
+  "end": "2025-01-31",
+  "resolution_in_m": 10,
+  "instance_id": "your-instance-id",
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret"
+}
+</pre>
+</body>
+</html>

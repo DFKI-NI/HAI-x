@@ -1,0 +1,5 @@
+name: 'Maschsee'
+coordinates_wgs84: [9.733200, 52.342366, 9.755344, 52.363231]
+bands: ['red', 'nir']
+resolution: 10
+time_interval: ["2018-06-01", "2018-06-30"]

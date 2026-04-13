@@ -1,0 +1,16 @@
+FROM python:3.10-slim-bookworm
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt && \
+    sed -i '26s#MAIN = "https://services.sentinel-hub.com"#MAIN = "https://sh.dataspace.copernicus.eu"#' /usr/local/lib/python3.10/site-packages/sentinelhub/constants.py
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gdal-bin && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+RUN rm -r notebooks && rm -r assets
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10003"]

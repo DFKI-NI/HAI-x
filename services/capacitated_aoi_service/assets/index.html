@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Density Based Clustering API — Usage</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; margin: 2rem; line-height: 1.5; }
+      code, pre { background: color-mix(in oklab, Canvas, CanvasText 7%); padding: 0.15rem 0.35rem; border-radius: 6px; }
+      pre { padding: 1rem; overflow: auto; }
+      h1 { margin-top: 0; }
+      .endpoint { border-left: 4px solid #6c6cff; padding-left: 0.75rem; margin: 1.25rem 0; }
+      .method { font-weight: 700; }
+      .get { color: #1b7f1b; }
+      .post { color: #8b3dff; }
+      .note { opacity: 0.8; }
+    </style>
+    <script>
+      async function submitJsonForm(event, url) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const data = {};
+        
+        // Handle file input for volume_geojson
+        const volumeGeojsonFile = form.querySelector('input[name="volume_geojson_file"]');
+        if (volumeGeojsonFile && volumeGeojsonFile.files.length > 0) {
+          const fileContent = await volumeGeojsonFile.files[0].text();
+          try { data['volume_geojson'] = JSON.parse(fileContent); } catch(e) { alert('Invalid GeoJSON file'); return false; }
+        } else if (url.endsWith('/get_capacitated_clustering')) {
+          alert('Please select a GeoJSON file for volume_geojson.');
+          return false;
+        }
+        
+        // Build apa_request_body from individual fields
+        const apaFields = ['apa_day', 'apa_resolution_in_m', 'apa_max_cloud_coverage', 'apa_lake_query', 'apa_copernicus_data_service', 'apa_instance_id', 'apa_client_id', 'apa_client_secret'];
+        const apaCheckbox = form.querySelector('input[name="apa_geojson_file"]');
+        if (apaCheckbox) {
+          data['apa_request_body'] = {
+            day: formData.get('apa_day'),
+            resolution_in_m: parseInt(formData.get('apa_resolution_in_m'), 10),
+            max_cloud_coverage: parseFloat(formData.get('apa_max_cloud_coverage')),
+            lake_query: formData.get('apa_lake_query'),
+            copernicus_data_service: formData.get('apa_copernicus_data_service'),
+            instance_id: formData.get('apa_instance_id'),
+            client_id: formData.get('apa_client_id'),
+            client_secret: formData.get('apa_client_secret'),
+            geojson_file: apaCheckbox.checked
+          };
+        }
+        
+        formData.forEach((value, key) => {
+          if (key === 'volume_geojson_file') return; // skip file input
+          if (key.startsWith('apa_') && key !== 'apa_service_url' && key !== 'apa_credentials_service_url') return; // skip apa_request_body fields
+          if (value === '') return; // skip empty fields to avoid invalid types
+          if (['resolution_in_m', 'epsg'].includes(key)) {
+            data[key] = parseInt(value, 10);
+          } else if (['max_cloud_coverage', 'harvester_width', 'residual_height', 'max_harvesting_depth', 'max_volume', 'eps', 'min_volume'].includes(key)) {
+            data[key] = parseFloat(value);
+          } else {
+            data[key] = value;
+          }
+        });
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(resp => resp.blob().then(blob => ({ blob, resp })))
+        .then(({ blob, resp }) => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          const cd = resp.headers.get('content-disposition');
+          a.download = cd && cd.includes('filename=') ? cd.split('filename=')[1].replace(/"/g, '') : 'result.geojson';
+          a.click();
+        })
+        .catch(err => alert('Error: ' + err));
+        return false;
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Density Based Clustering API</h1>
+    <p>This FastAPI service provides endpoints to estimate harvestable volume from bathymetry and APA data and to cluster areas of interest by capacity.</p>
+
+    <div class="endpoint">
+      <div><span class="method post">POST</span> <code>/volume</code></div>
+      <p>Computes a volume estimate GeoJSON. If a matching output file already exists in the working directory, it is returned from cache.</p>
+      <p><strong>Request body (JSON):</strong></p>
+      <pre>{
+  "bathymetry_service_url": "http://localhost:10005/geojson",
+  "apa_credentials_service_url": "http://localhost:10003/api/set_credentials",
+  "apa_service_url": "http://localhost:10003/api/get_apa",
+  "instance_id": "...", "client_id": "...", "client_secret": "...",
+  "day": "2025-12-26",
+  "lake_query": "Maschsee,Hannover,Germany",
+  "resolution_in_m": 10,
+  "max_cloud_coverage": 0.25,
+  "copernicus_data_service": "ALL-BANDS-TRUE-COLOR",
+  "harvester_width": 20.0,
+  "residual_height": 0.2,
+  "max_harvesting_depth": 1.8,
+  "output_file": null
+}</pre>
+      <p><strong>Response:</strong> <code>200 OK</code> with <code>application/geo+json</code> file.</p>
+      <h3>Try it</h3>
+      <form action="/volume" method="post" enctype="application/x-www-form-urlencoded" onsubmit="return submitJsonForm(event, '/volume');">
+        <label>bathymetry_service_url: <input type="text" name="bathymetry_service_url" value="http://bathymetry:10005/geojson" style="width:300px"></label><br>
+        <label>apa_credentials_service_url: <input type="text" name="apa_credentials_service_url" value="http://sentinel_2:10003/api/set_credentials" style="width:300px"></label><br>
+        <label>apa_service_url: <input type="text" name="apa_service_url" value="http://sentinel_2:10003/api/get_apa" style="width:300px"></label><br>
+        <label>instance_id: <input type="text" name="instance_id" value=""></label><br>
+        <label>client_id: <input type="text" name="client_id" value=""></label><br>
+        <label>client_secret: <input type="text" name="client_secret" value=""></label><br>
+        <label>day: <input type="text" name="day" value="2025-12-26"></label><br>
+        <label>lake_query: <input type="text" name="lake_query" value="Maschsee,Hannover,Germany"></label><br>
+        <label>resolution_in_m: <input type="number" name="resolution_in_m" value="10"></label><br>
+        <label>max_cloud_coverage: <input type="number" step="0.01" name="max_cloud_coverage" value="0.25"></label><br>
+        <label>copernicus_data_service: <input type="text" name="copernicus_data_service" value="ALL-BANDS-TRUE-COLOR"></label><br>
+        <label>harvester_width: <input type="number" step="0.1" name="harvester_width" value="20.0"></label><br>
+        <label>residual_height: <input type="number" step="0.1" name="residual_height" value="0.2"></label><br>
+        <label>max_harvesting_depth: <input type="number" step="0.1" name="max_harvesting_depth" value="1.8"></label><br>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <div class="endpoint">
+      <div><span class="method get">GET</span> <code>/get_capacitated_clustering</code></div>
+      <p>Runs capacitated clustering on the provided volume polygons and returns a clustered AOI as GeoJSON.</p>
+      <p><strong>Query/body (JSON via GET with body or switch to POST if needed in your client):</strong></p>
+      <pre>{
+  "max_volume": 100000.0,
+  "eps": 50.0,
+  "min_volume": 1000.0,
+  "epsg": 3857,
+  "volume_geojson": { "type": "FeatureCollection", "features": [/* ... */] },
+  "boundary_geojson": null,
+  "harvester_width": 20.0,
+  "residual_height": 0.2,
+  "max_harvesting_depth": 1.8,
+  "bathymetry_service_url": "http://localhost:10005/geojson",
+  "apa_service_url": "http://localhost:10003/api/get_apa",
+  "apa_request_body": { /* see APA service docs */ }
+}</pre>
+      <p><strong>Response:</strong> <code>200 OK</code> with <code>application/geo+json</code> file download named <code>clustered_aoi.geojson</code>.</p>
+      <h3>Try it</h3>
+      <form action="/get_capacitated_clustering" method="post" onsubmit="return submitJsonForm(event, '/get_capacitated_clustering');">
+        <label>max_volume: <input type="number" step="0.1" name="max_volume" value="100000.0"></label><br>
+        <label>eps: <input type="number" step="0.1" name="eps" value="50.0"></label><br>
+        <label>min_volume: <input type="number" step="0.1" name="min_volume" value="1000.0"></label><br>
+        <label>epsg: <input type="number" name="epsg" value="3857"></label><br>
+        <label>volume_geojson (GeoJSON file): <input type="file" name="volume_geojson_file" accept=".geojson,.json"></label><br>
+        <label>harvester_width: <input type="number" step="0.1" name="harvester_width" value="20.0"></label><br>
+        <label>residual_height: <input type="number" step="0.1" name="residual_height" value="0.2"></label><br>
+        <label>max_harvesting_depth: <input type="number" step="0.1" name="max_harvesting_depth" value="1.8"></label><br>
+        <label>bathymetry_service_url: <input type="text" name="bathymetry_service_url" value="http://bathymetry:10005/geojson" style="width:300px"></label><br>
+        <label>apa_service_url: <input type="text" name="apa_service_url" value="http://sentinel_2:10003/api/get_apa" style="width:300px"></label><br>
+        <fieldset style="margin: 0.5rem 0; padding: 0.5rem;">
+          <legend>apa_request_body</legend>
+          <label>day: <input type="text" name="apa_day" value="2025-12-26"></label><br>
+          <label>resolution_in_m: <input type="number" name="apa_resolution_in_m" value="10"></label><br>
+          <label>max_cloud_coverage: <input type="number" step="0.01" name="apa_max_cloud_coverage" value="0.25"></label><br>
+          <label>lake_query: <input type="text" name="apa_lake_query" value="Maschsee,Hannover,Germany"></label><br>
+          <label>copernicus_data_service: <input type="text" name="apa_copernicus_data_service" value="ALL-BANDS-TRUE-COLOR"></label><br>
+          <label>instance_id: <input type="text" name="apa_instance_id" value=""></label><br>
+          <label>client_id: <input type="text" name="apa_client_id" value=""></label><br>
+          <label>client_secret: <input type="text" name="apa_client_secret" value=""></label><br>
+          <label>geojson_file: <input type="checkbox" name="apa_geojson_file" checked></label><br>
+        </fieldset>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <h2>Notes</h2>
+    <ul>
+      <li>The service may contact external services for bathymetry and APA data. Ensure the URLs are reachable.</li>
+      <li>Caching: the <code>/volume</code> endpoint returns a pre-existing file if the expected file name is present in the working directory.</li>
+      <li>Error handling: External service errors return <code>502 Bad Gateway</code>.</li>
+    </ul>
+
+    <p class="note">You are viewing static usage information served from <code>/assets/index.html</code>.</p>
+  </body>
+  </html>

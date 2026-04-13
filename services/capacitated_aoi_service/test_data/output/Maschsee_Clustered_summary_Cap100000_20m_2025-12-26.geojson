@@ -1,0 +1,25 @@
+{
+  "total_features": 5278,
+  "total_clusters": 10,
+  "valid_clusters": 9,
+  "max_volume": 100000.0,
+  "min_volume": 90000.0,
+  "coordinate_system": "EPSG:4326 (WGS84)",
+  "input files": [
+    "../Maschsee_2025-12-26_volume_20m.geojson"
+  ],
+  "input data": [
+    "volume"
+  ],
+  "main_output": "cluster_id",
+  "additional_outputs": [
+    "explanation",
+    "cluster_total_volume",
+    "cluster_valid"
+  ],
+  "output files": [],
+  "output data": [],
+  "global Explanation": [
+    "The algorithm clusters cells based on proximity, volume and capacity of the harvester to 10 clusters that can be harvested in a single trip.9 clusters with a total volume of plants in the range (90000.0,100000.0), the harvester capacity is 100000.0 ."
+  ]
+}
