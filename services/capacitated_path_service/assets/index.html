@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cluster Connectors</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Cluster Connectors API</h1>
+    <div>
+        This service generates optimized connector paths for clustered geographical data (CVRP). 
+        Upload your clustered GeoJSON, specify start and end points, and choose a path generation mode:
+        <ul>
+            <li><strong>Serpentine (Boustrophedon):</strong> Generates a back-and-forth pattern.</li>
+            <li><strong>Unidirectional:</strong> Generates paths in a single direction.</li>
+            <li><strong>Nearest Point:</strong> Connects points using a greedy nearest-neighbor heuristic.</li>
+        </ul>
+    </div>
+    <form id="processForm">
+        <div class="form-group">
+            <label for="cluster_file">Cluster GeoJSON:</label>
+            <input type="file" id="cluster_file" name="cluster_file" accept=".geojson,application/json" required>
+        </div>
+        <div class="form-group">
+            <label for="boundary_file">Boundary GeoJSON (optional):</label>
+            <input type="file" id="boundary_file" name="boundary_file" accept=".geojson,application/json">
+        </div>
+        <div class="form-group">
+            <label>Start Coordinates (lon, lat):</label>
+            <input type="number" step="any" name="start_x" placeholder="Longitude" value="9.741273233" required>
+            <input type="number" step="any" name="start_y" placeholder="Latitude" value="52.353144617" required>
+        </div>
+        <div class="form-group">
+            <label>End Coordinates (lon, lat):</label>
+            <input type="number" step="any" name="end_x" placeholder="Longitude" value="9.741244433" required>
+            <input type="number" step="any" name="end_y" placeholder="Latitude" value="52.35319485" required>
+        </div>
+        <div class="form-group">
+            <label for="row_spacing">Row Spacing:</label>
+            <input type="number" step="any" name="row_spacing" value="5.0">
+        </div>
+        <div class="form-group">
+            <label for="mode">Mode:</label>
+            <select name="mode">
+                <option value="serpentine">Serpentine</option>
+                <option value="unidirectional">Unidirectional</option>
+                <option value="nearest_point">Nearest Point</option>
+            </select>
+        </div>
+        <button type="button" onclick="process()">Process</button>
+    </form>
+    <hr>
+    <div id="result"></div>
+    <a id="downloadLink" style="display:none">Download Output GeoJSON</a>
+
+    <script>
+        async function readFileAsJson(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(JSON.parse(reader.result));
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        async function process() {
+            const form = document.getElementById('processForm');
+            const formData = new FormData(form);
+            
+            const clusterFile = document.getElementById('cluster_file').files[0];
+            const boundaryFile = document.getElementById('boundary_file').files[0];
+
+            if (!clusterFile) {
+                alert("Please select a cluster GeoJSON file.");
+                return;
+            }
+
+            try {
+                const clusterJson = await readFileAsJson(clusterFile);
+                let boundaryJson = null;
+                if (boundaryFile) {
+                    boundaryJson = await readFileAsJson(boundaryFile);
+                }
+
+                const requestData = {
+                    cluster_json: clusterJson,
+                    boundary_file: boundaryJson,
+                    start_x: parseFloat(formData.get('start_x')),
+                    start_y: parseFloat(formData.get('start_y')),
+                    end_x: parseFloat(formData.get('end_x')),
+                    end_y: parseFloat(formData.get('end_y')),
+                    row_spacing: parseFloat(formData.get('row_spacing')),
+                    mode: formData.get('mode')
+                };
+
+                const response = await fetch('/cvrp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.getElementById('downloadLink');
+                    link.href = url;
+                    link.download = 'output.geojson';
+                    link.style.display = 'block';
+                    link.innerText = 'Download Resulting Path GeoJSON';
+                    document.getElementById('result').innerText = 'Success! Click the link below to download.';
+                } else {
+                    const errorData = await response.json();
+                    document.getElementById('result').innerText = 'Error: ' + (errorData.detail || JSON.stringify(errorData));
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('result').innerText = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

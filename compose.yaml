@@ -29,7 +29,7 @@ services:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
 
   path_planning_vrpy:
-    image: git.ni.dfki.de:5050/hai-x/path-planning/cvrp-with-vrpy:latest
+    build: services/cvrp-with-vrpy/.
     networks:
       - haix-network
     ports:
@@ -37,59 +37,73 @@ services:
 
   estimate_areas_of_interest:
     #image: ndviareas
-    image: git.ni.dfki.de:5050/hai-x/area-of-interest-detectors/estimate-weeding-areas-from-ndvi:latest
+    build: services/estimate_areas_of_interest/.
     networks:
       - haix-network
-    environment:
-      - sh_client_id=${sh_client_id}
-      - sh_client_secret=${sh_client_secret}
-      - sh_instance_id=${sh_instance_id}
     ports:
       - "10003:10003"
 
   evaluation_service:
-    image: git.ni.dfki.de:5050/hai-x/evaluation/evaluation-of-satellite-seagrass-detection-with-onboard-camera:latest
+    build: services/evaluation_service/.
     networks:
       - haix-network
     ports:
       - "10005:10005"
     volumes:
       - /mnt/maschsee_videos:/data/rosbags
-    env_file:
-      - .env
 
-  data_extraction:
-    image: git.ni.dfki.de:5050/hai-x/haix_tools/ros-data-extraction-api:latest
-    networks:
-      - haix-network
-    ports:
-      - "10006:10006"
+  ros-noetic:
+    build:
+      context: services/data_extraction/dockers/
+      dockerfile: Dockerfile.base
+      target: ros-noetic
+    container_name: ros-noetic
+    network_mode: host
+    profiles:
+      - base
+
+
+  api-data-extraction:
+    build:
+      context: ./
+      dockerfile: services/data_extraction/dockers/Dockerfile.ros.api_data_extraction
+      args:
+        - BASE_IMAGE=hai-x-ros-noetic:latest
+    container_name: api-data-extraction
     volumes:
       - /mnt/maschsee_videos:/home/docker/rosbags
+    ports:
+      - "10006:10006"
+    profiles:
+      - api-data-extraction
+    command: python3 -m uvicorn scripts.api_data_extraction:app --host 0.0.0.0 --port 10006
+    # tty: true
+    # stdin_open: true
+
 
   bathymetry_service:
-    image: git.ni.dfki.de:5050/hai-x/data/bathymetry/bathymetry:latest
+    build: services/bathymetry_service/.
     networks:
       - haix-network
     ports:
       - "10007:10005"
 
   apa_index_service:
-    image: git.ni.dfki.de:5050/hai-x/data/sentinel-2:latest
+    build: services/apa_index_service/.
     networks:
       - haix-network
     ports:
       - "10008:10003"
 
   capacitated_aoi_service:
-    image: git.ni.dfki.de:5050/hai-x/area-of-interest-detectors/density_based_clustering:latest
+    build: services/capacitated_aoi_service/.
     networks:
       - haix-network
     ports:
       - "10010:10010"
 
   capacitated_path_service:
-    image: git.ni.dfki.de:5050/hai-x/path-planning/cvrp_with_capacity_clusters/capicitated_cluster_cvrp:latest
+    build: services/capacitated_path_service/.
     networks:
       - haix-network
     ports:

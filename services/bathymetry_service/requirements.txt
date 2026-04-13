@@ -1,0 +1,12 @@
+numpy
+matplotlib
+scipy
+pandas
+shapely
+geopandas
+pykrige
+geopy
+osmnx
+tqdm
+fastapi
+uvicorn

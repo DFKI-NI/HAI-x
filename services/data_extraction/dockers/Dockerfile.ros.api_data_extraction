@@ -1,0 +1,29 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+LABEL maintainer="Eike Rodenbaeck eike.rodenbaeck@dfki.de"
+
+# Set the default shell to bash
+SHELL ["/bin/bash","-c"]
+
+USER root
+# Dependencies for building packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip \
+    ros-noetic-perception=1.5.0-1*\
+    ros-noetic-cv-bridge\
+    ros-${ROS_DISTRO}-point-cloud-transport \
+    ros-${ROS_DISTRO}-point-cloud-transport-plugins \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the default user to docker
+# USER docker
+
+# Install additional Python packages 
+RUN pip3 install --upgrade --no-cache-dir --verbose fastapi uvicorn pandas loguru
+
+# Copy your application code
+WORKDIR /home/docker/app
+COPY services/data_extraction/scripts ./scripts
+
+CMD ["uvicorn", "scripts.api_data_extraction:app", "--host", "0.0.0.0", "--port", "10006"]

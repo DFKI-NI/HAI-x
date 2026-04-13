@@ -1,0 +1,54 @@
+FROM ros:noetic-ros-base AS ros-noetic
+
+SHELL ["/bin/bash","-c"]
+ARG DEBIAN_FRONTEND=noninteractive
+ARG USERNAME=docker
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# create a non-root user with sudo privileges
+RUN useradd -m $USERNAME \
+    && echo "$USERNAME:$USERNAME" | chpasswd \ 
+    && usermod --shell /bin/bash $USERNAME \
+    && usermod -aG sudo $USERNAME \
+    && usermod -aG video $USERNAME \
+    && usermod -aG audio $USERNAME \
+    && usermod -aG dialout $USERNAME
+
+COPY ros_entrypoint.sh /
+
+USER ${USERNAME}
+
+WORKDIR /home/${USERNAME}/workspace
+
+RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["/bin/bash"]
+
+FROM ros-noetic AS noetic-workspace
+
+ENV CATKIN_WS=/home/$USERNAME/catkin_ws
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-catkin-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+USER ${USERNAME}
+# Create a Catkin workspace
+RUN mkdir -p ${CATKIN_WS}/src
+
+# Set the default working directory
+WORKDIR ${CATKIN_WS}
+
+# Build all packages in the Catkin workspace
+RUN source /opt/ros/noetic/setup.bash \
+    && catkin init \
+    && catkin config --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebugInfo \
+    && catkin build --limit-status-rate 0.1 --no-notify
+
+# source the ROS setup files and the Catkin workspace setup file in .bashrc
+RUN echo "source ${CATKIN_WS}/devel/setup.bash" >> ~/.bashrc
