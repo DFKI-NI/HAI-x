@@ -1,7 +1,4 @@
-ARG BASE_IMAGE
-FROM ${BASE_IMAGE}
-
-LABEL maintainer="Eike Rodenbaeck eike.rodenbaeck@dfki.de"
+FROM base_image
 
 # Set the default shell to bash
 SHELL ["/bin/bash","-c"]
