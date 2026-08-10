@@ -1,18 +1,28 @@
-dash
+# --- Web framework -----------------------------------------------------------
+Django>=5.2,<7
+django-plotly-dash==2.5.1
+whitenoise
+gunicorn
+Flask-DebugToolbar
+Jinja2
+
+# --- Dash / plotting ----------------------------------------------------------
+dash==2.17.1
+flask==2.3.3
+werkzeug==2.3.8
 dash_daq
 dash_bootstrap_components
 dash_player
-ffmpeg
-Flask
-folium
-geopy
-networkx
+plotly
+
+# --- Data / science -----------------------------------------------------------
 numpy
 pandas
-plotly
+scipy
+geopy
+
+# --- Infrastructure -----------------------------------------------------------
 psycopg2
+requests
 PyYAML
 tqdm
-vrpy
-Flask-DebugToolbar
-scipy

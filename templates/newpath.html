@@ -50,8 +50,10 @@
               document.addEventListener('DOMContentLoaded', function() {
                   var map = L.map('map').setView([52.353089, 9.745069], 14);
 
-                  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                      subdomains: 'abcd',
+                      maxZoom: 20
                   }).addTo(map);
 
                   var drawnItems = new L.FeatureGroup();
@@ -111,7 +113,7 @@
                   <div class="col-sm-6">
                     <textarea id="path_hid" name="hidd" hidden aria-hidden="true">{{ path_var }}</textarea>
                     <label for="date_0" class="form-label">{{ date_lang }}</label>
-                    <input type="date" class="form-control" name="date" id="date_0" value="{{ request.form['date'] }}" required>
+                    <input type="date" class="form-control" name="date" id="date_0" value="" required>
                     {% if aoi_dates %}
                     <select class="form-select mt-2" onchange="if(this.value) document.getElementById('date_0').value=this.value;" aria-label="Select date from areas of interest">
                       <option value="" selected>Select AOI date&hellip;</option>
@@ -167,13 +169,18 @@
           <div class="col-lg-6">
             <div id="generated-map" class="map-container fade-in" style="height: 450px;"></div>
             <script>
-              document.addEventListener('DOMContentLoaded', function() {
+              (function() {
                   var mapData = {{ fig|safe if fig and fig != '<div></div>' else 'null' }};
-                  if (mapData) {
-                      var gmap = L.map('generated-map').setView([52.353089, 9.745069], 13);
-                      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                      }).addTo(gmap);
+                  var gmapInstance = null;
+
+                  function initGeneratedMap() {
+                      if (gmapInstance || !mapData) return;
+                      gmapInstance = L.map('generated-map').setView([52.353089, 9.745069], 13);
+                      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                          subdomains: 'abcd',
+                          maxZoom: 20
+                      }).addTo(gmapInstance);
                       var colors = ['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#bfef45'];
                       var colorIdx = 0;
                       if (mapData.paths) {
@@ -181,9 +188,9 @@
                               var route = mapData.paths[routeId];
                               var latlngs = route.map(function(p) { return [p[0], p[1]]; });
                               var color = colors[colorIdx % colors.length];
-                              L.polyline(latlngs, {color: color, weight: 3}).addTo(gmap);
+                              L.polyline(latlngs, {color: color, weight: 3}).addTo(gmapInstance);
                               latlngs.forEach(function(ll) {
-                                  L.circleMarker(ll, {radius: 4, color: color, fillColor: color, fillOpacity: 0.8}).addTo(gmap);
+                                  L.circleMarker(ll, {radius: 4, color: color, fillColor: color, fillOpacity: 0.8}).addTo(gmapInstance);
                               });
                               colorIdx++;
                           }
@@ -193,14 +200,34 @@
                               var aoi = mapData.aoi[aoiId];
                               L.circleMarker([aoi.center[0], aoi.center[1]], {
                                   radius: 8, color: 'green', fillColor: 'green', fillOpacity: 0.6
-                              }).bindPopup('AOI ' + aoiId + ' (amount: ' + aoi.amount + ')').addTo(gmap);
+                              }).bindPopup('AOI ' + aoiId + ' (amount: ' + aoi.amount + ')').addTo(gmapInstance);
                           }
                       }
                       var allPoints = [];
                       if (mapData.paths) { for (var r in mapData.paths) { mapData.paths[r].forEach(function(p) { allPoints.push([p[0], p[1]]); }); } }
-                      if (allPoints.length > 0) { gmap.fitBounds(L.latLngBounds(allPoints).pad(0.1)); }
+                      if (allPoints.length > 0) { gmapInstance.fitBounds(L.latLngBounds(allPoints).pad(0.1)); }
                   }
-              });
+
+                  document.addEventListener('DOMContentLoaded', function() {
+                      // Also init when the tab is shown (handles Bootstrap tab switching)
+                      var tabBtn = document.getElementById('generate-tab');
+                      if (tabBtn) {
+                          tabBtn.addEventListener('shown.bs.tab', function() {
+                              initGeneratedMap();
+                              if (gmapInstance) { gmapInstance.invalidateSize(); }
+                          });
+                      }
+                      // If the generate tab is already active on load, defer init so the
+                      // fade-in CSS transition has completed and the container has dimensions.
+                      var tabPane = document.getElementById('generate-tab-pane');
+                      if (tabPane && tabPane.classList.contains('active')) {
+                          setTimeout(function() {
+                              initGeneratedMap();
+                              if (gmapInstance) { gmapInstance.invalidateSize(); }
+                          }, 150);
+                      }
+                  });
+              })();
             </script>
           </div>
         </div>
@@ -266,8 +293,10 @@
           }
 
           const map = L.map('path-map');
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
           }).addTo(map);
 
           // Diskrete Farbpalette für serpentine_id

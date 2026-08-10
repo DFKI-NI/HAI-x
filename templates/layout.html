@@ -30,9 +30,7 @@
     <script src="{{ url_for('static', filename='js/pixi.js/dist/pixi.js') }}"></script>
     <script src="{{ url_for('static', filename='js/form.js') }}"></script>
 
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo.png') }}">
   </head>
   <body>
     {% include 'navbar.html' %}

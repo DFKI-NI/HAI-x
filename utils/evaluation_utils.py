@@ -92,7 +92,7 @@ def draw_map(rsltdata):
     #)
 
     fig = go.Figure()
-    fig.add_trace(go.Choroplethmapbox(
+    fig.add_trace(go.Choroplethmap(
         geojson=geojson_data,  # Das GeoJSON-Objekt mit den Geometrien
         locations=rsltdata.index,  # Spalte im DataFrame mit den IDs
         featureidkey="id",  # Pfad zur ID in den GeoJSON-Properties
@@ -104,9 +104,9 @@ def draw_map(rsltdata):
     ))
 
     fig.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_zoom=13,
-        mapbox_center={"lat": 52.35433447283137, "lon": 9.743009465842176},
+        map_style="carto-positron",
+        map_zoom=13,
+        map_center={"lat": 52.35433447283137, "lon": 9.743009465842176},
         margin=dict(l=0, r=0, b=0, t=0),
         height=450
     )

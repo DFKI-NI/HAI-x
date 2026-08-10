@@ -40,12 +40,12 @@ def create_base_map(date):
     with open(var.GEO_FILE, 'r') as file:
         geojson = json.load(file)
 
-    fig = px.choropleth_mapbox(
+    fig = px.choropleth_map(
             df, geojson=geojson, color="type",
             locations="idx",
             center={"lat": 52.35256085248966, "lon": 9.745146485688414},
             zoom=13,
-            mapbox_style="carto-positron",
+            map_style="carto-positron",
             opacity=0.2,
             color_discrete_map={
                 var.AVOID: "red",

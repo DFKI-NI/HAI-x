@@ -13,7 +13,7 @@ import pandas as pd
 import requests
 from flask import render_template, make_response, request, current_app as app, session, jsonify, send_file
 
-from utils import route_util as util, generate_path_script
+from utils import route_util as util
 from utils import variables as var, dash_util as dutil, language_utils
 from utils.database import database as db
 from utils.geojson_processor import extract_bathymetry_fields, extract_apa_fields, geojson_to_json_string, build_volume_geojson

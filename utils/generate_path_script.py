@@ -46,14 +46,14 @@ def pathplanning(coords, volumen):
     test = np.append([coords[0]], test, axis=0)
     test = np.append(test, [coords[0]], axis=0)
 
-    fig = go.Figure(go.Scattermapbox(
+    fig = go.Figure(go.Scattermap(
             lat=test[:, 0],
             lon=test[:, 1],
             mode='markers+lines'
         ))
 
-    fig.update_layout(mapbox_style="open-street-map")
-    fig.update_layout(mapbox = {
+    fig.update_layout(map_style="carto-positron")
+    fig.update_layout(map={
         'center': {'lat': 52.35308906463923, 'lon': 9.745069376309802},
         'zoom': 12}
         )
@@ -246,7 +246,7 @@ def draw_map(fig, cords_to_draw, aoi_to_draw, date):
              [52.36207759, 9.73843317]])  # 15
 
     for idx in range(len(cords_to_draw)):
-        fig.add_scattermapbox(
+        fig.add_scattermap(
             lat=cords_to_draw[idx][:, 0],
             lon=cords_to_draw[idx][:, 1],
             mode='markers+lines',
@@ -256,7 +256,7 @@ def draw_map(fig, cords_to_draw, aoi_to_draw, date):
     aoi_to_draw = np.append([[0, 0]], aoi_to_draw, axis=0)
     aoi_to_draw = aoi_to_draw.astype(int)
 
-    fig.add_trace(go.Scattermapbox(
+    fig.add_trace(go.Scattermap(
             mode = "markers",
             lat = cords_np[aoi_to_draw[:, 0]][:, 0],
             lon = cords_np[aoi_to_draw[:, 0]][:, 1],
@@ -265,8 +265,8 @@ def draw_map(fig, cords_to_draw, aoi_to_draw, date):
         ))
 
     fig.update_layout(
-        mapbox_style="open-street-map",
-        mapbox={'center': {'lat': 52.35308906463923, 'lon': 9.745069376309802}, 'zoom': 13},
+        map_style="carto-positron",
+        map={'center': {'lat': 52.35308906463923, 'lon': 9.745069376309802}, 'zoom': 13},
         margin=dict(l=0, r=0, b=0, t=0),
         height=450
     )
@@ -286,21 +286,21 @@ def draw_map2(cords_to_draw: np.array, aoi_dict: dict):
         areasOfInterest_cords[i] = np.array([x_mitte, y_mitte, aoi_dict[cords]["amount"]])
         i += 1
 
-    fig = go.Figure(go.Scattermapbox(
+    fig = go.Figure(go.Scattermap(
             lat=[],
             lon=[],
             mode='markers+lines'
         ))
 
     for idx in cords_to_draw:
-        fig.add_scattermapbox(
+        fig.add_scattermap(
             lat=np.array(cords_to_draw[idx])[:, 0],
             lon=np.array(cords_to_draw[idx])[:, 1],
             mode='markers+lines',
             text=idx
         )
 
-    fig.add_trace(go.Scattermapbox(
+    fig.add_trace(go.Scattermap(
             mode = "markers",
             lat = areasOfInterest_cords[:, 0],
             lon = areasOfInterest_cords[:, 1],
@@ -310,8 +310,8 @@ def draw_map2(cords_to_draw: np.array, aoi_dict: dict):
 
 
     fig.update_layout(
-        mapbox_style="open-street-map",
-        mapbox={'center': {'lat': 52.35308906463923, 'lon': 9.745069376309802}, 'zoom': 12},
+        map_style="carto-positron",
+        map={'center': {'lat': 52.35308906463923, 'lon': 9.745069376309802}, 'zoom': 12},
         margin=dict(l=0, r=0, b=0, t=0),
         height=450
     )

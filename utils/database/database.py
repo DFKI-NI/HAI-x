@@ -11,14 +11,15 @@ import logging
 CONN = None
 
 def init_cursor():
-    """ initializes a connection to the database """
+    """ initializes a connection to the database (parameters via env vars) """
     global CONN
     if CONN == None:
         CONN = psycopg2.connect(
-                host="postgis_container",
-                database="haix",
-                user="postgres",
-                password="secret"
+                host=os.environ.get("POSTGRES_HOST", "postgis_container"),
+                port=os.environ.get("POSTGRES_PORT", "5432"),
+                database=os.environ.get("POSTGRES_DB", "haix"),
+                user=os.environ.get("POSTGRES_USER", "postgres"),
+                password=os.environ.get("POSTGRES_PASSWORD", "secret")
             )
     # Roll back any previously failed transaction so the connection is usable
     if CONN.status == psycopg2.extensions.STATUS_IN_TRANSACTION:
@@ -157,7 +158,7 @@ def clean(input):
 def get_max_id(schema, table):
     """ return the highest id value from a table """
     with init_cursor() as haix:
-        if table is "path":
+        if table == "path":
             query = sql.SQL("SELECT MAX(path_id) "
                             "FROM {};").format(
                 sql.Identifier(schema, table)

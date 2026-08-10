@@ -1,6 +1,5 @@
 import logging
 
-from flask import url_for
 import os
 from collections import defaultdict
 from utils import variables as var
@@ -12,8 +11,7 @@ import json
 import plotly.express as px
 import plotly.graph_objs as go
 from os import listdir
-from utils import variables as var
-from flask.helpers import get_root_path
+from django.templatetags.static import static
 from datetime import datetime
 import logging
 from utils.database import database as db
@@ -72,10 +70,16 @@ def get_ir_time_by_rgb_time(rgb_time: float, date: str):
         return 0
 
 def format_dates():
-    haix = db.select_distinct(var.SCHEMA, var.AREA, 'date')
-    pathplanning = db.select_distinct(var.SCHEMA, var.PATH, 'date')
-    traj = db.select_distinct(var.SCHEMA, var.traj, 'date')
-    eval = db.select_distinct(var.SCHEMA, var.EVALUATION, 'date')
+    try:
+        haix = db.select_distinct(var.SCHEMA, var.AREA, 'date')
+        pathplanning = db.select_distinct(var.SCHEMA, var.PATH, 'date')
+        traj = db.select_distinct(var.SCHEMA, var.traj, 'date')
+        eval = db.select_distinct(var.SCHEMA, var.EVALUATION, 'date')
+    except Exception as exc:
+        # The dashboard layout is built at import time; never crash startup
+        # just because the database is not reachable yet.
+        logging.getLogger(__name__).warning("Could not load dates from database: %s", exc)
+        return []
 
     date_choices = append_type_to_dates(haix, pathplanning, traj, eval)
     return date_choices
@@ -131,7 +135,7 @@ def add_images(id):
         images = html.Div(children=[], style=parent_style_dict)
         image_paths = image_paths.split(';')
         for file in image_paths:
-            path = url_for('static', filename='img/' + file)
+            path = static('img/' + file)
             image = html.Img(src=path, style=child_style_dict, width='50%')
             images.children.append(image)
         image_block.children.append(images)
@@ -154,7 +158,7 @@ def clear_map(fig):
 def add_start_stop(fig, start, stop):
     df = pd.DataFrame([[start[0], start[1], "start"], [stop[0], stop[1], "stop"]], columns=['lat', 'lon', 'type'])
 
-    fig.add_scattermapbox(
+    fig.add_scattermap(
         lat=df["lat"],
         lon=df["lon"],
         text=df["type"],
@@ -191,7 +195,7 @@ def add_boat_positions(fig, curentRgbTime, date, video_name):
                 boat_lon = row['Longitude']
                 break
             
-    fig.add_scattermapbox(
+    fig.add_scattermap(
         lat=[boat_lat],
         lon=[boat_lon],
         text='data["type"]',
